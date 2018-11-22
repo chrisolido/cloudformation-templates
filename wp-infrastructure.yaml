@@ -12,10 +12,10 @@ Parameters:
     Default: wordpress
   DatabaseUser:
     Type: String
-    Default: wordpress
+    Default: admin
   DatabasePassword:
     Type: String
-    Default: w0rdpr355
+    Default: wordpress
     NoEcho: true
 Mappings:
   RegionMap:
@@ -60,17 +60,19 @@ Mappings:
       "EC2" : "t2.medium"
       "DB" : "db.t2.medium"
 Resources:
-  DB:
+  DBInstance:
     Type: "AWS::RDS::DBInstance"
     Properties:
       AllocatedStorage: "5"
       StorageType: gp2
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
+      DBSecurityGroups:
+        - !Ref DBSecurityGroup
       DBName: !Ref DatabaseName
       Engine: MariaDB
       MasterUsername: !Ref DatabaseUser
       MasterUserPassword: !Ref DatabasePassword
-  EC2:
+  EC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
@@ -92,9 +94,15 @@ Resources:
             rm latest.tar.gz
             cp wp-config-sample.php wp-config.php
             sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
-            sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
+            sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php
             sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
             sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
+  DBSecurityGroup:
+    Type: AWS::RDS::DBSecurityGroup
+    Properties:
+      GroupDescription: Database Security Group
+      DBSecurityGroupIngress:
+        - EC2SecurityGroupId: !Ref EC2SecurityGroup
   EC2SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:

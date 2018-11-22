@@ -16,11 +16,11 @@
         },
         "DatabaseUser": {
             "Type": "String",
-            "Default": "wordpress"
+            "Default": "admin"
         },
         "DatabasePassword": {
             "Type": "String",
-            "Default": "w0rdpr355",
+            "Default": "wordpress",
             "NoEcho": true
         }
     },
@@ -88,7 +88,7 @@
         }
     },
     "Resources": {
-        "DB": {
+        "DBInstance": {
             "Type": "AWS::RDS::DBInstance",
             "Properties": {
                 "AllocatedStorage": "5",
@@ -102,6 +102,11 @@
                         "DB"
                     ]
                 },
+                "DBSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ],
                 "DBName": {
                     "Ref": "DatabaseName"
                 },
@@ -114,7 +119,7 @@
                 }
             }
         },
-        "EC2": {
+        "EC2Instance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "ImageId": {
@@ -143,9 +148,22 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum install httpd php mysql php-mysql -y\nyum update -y\nsystemctl start httpd\nsystemctl enable httpd\ncd /var/www/html\nwget https://wordpress.org/latest.tar.gz\ntar -zxvf latest.tar.gz --strip 1\nrm latest.tar.gz\ncp wp-config-sample.php wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
+                        "Fn::Sub": "#!/bin/bash\nyum install httpd php mysql php-mysql -y\nyum update -y\nsystemctl start httpd\nsystemctl enable httpd\ncd /var/www/html\nwget https://wordpress.org/latest.tar.gz\ntar -zxvf latest.tar.gz --strip 1\nrm latest.tar.gz\ncp wp-config-sample.php wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
                     }
                 }
+            }
+        },
+        "DBSecurityGroup": {
+            "Type": "AWS::RDS::DBSecurityGroup",
+            "Properties": {
+                "GroupDescription": "Database Security Group",
+                "DBSecurityGroupIngress": [
+                    {
+                        "EC2SecurityGroupId": {
+                            "Ref": "EC2SecurityGroup"
+                        }
+                    }
+                ]
             }
         },
         "EC2SecurityGroup": {
