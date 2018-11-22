@@ -159,7 +159,7 @@
                 "GroupDescription": "Database Security Group",
                 "DBSecurityGroupIngress": [
                     {
-                        "EC2SecurityGroupId": {
+                        "EC2SecurityGroupName": {
                             "Ref": "EC2SecurityGroup"
                         }
                     }
@@ -194,7 +194,7 @@
         "Website": {
             "Description": "The Public DNS for the EC2 Instance",
             "Value": {
-                "Fn::Sub": "http://${EC2.PublicDnsName}"
+                "Fn::Sub": "http://${EC2Instance.PublicDnsName}"
             }
         }
     }

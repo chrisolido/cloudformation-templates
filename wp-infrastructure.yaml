@@ -98,11 +98,11 @@ Resources:
             sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
             sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
   DBSecurityGroup:
-    Type: AWS::RDS::DBSecurityGroup
+    Type: "AWS::RDS::DBSecurityGroup"
     Properties:
       GroupDescription: Database Security Group
       DBSecurityGroupIngress:
-        - EC2SecurityGroupId: !Ref EC2SecurityGroup
+        - EC2SecurityGroupName: !Ref EC2SecurityGroup
   EC2SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
@@ -122,4 +122,4 @@ Resources:
 Outputs:
   Website:
     Description: The Public DNS for the EC2 Instance
-    Value: !Sub http://${EC2.PublicDnsName}
+    Value: !Sub http://${EC2Instance.PublicDnsName}
