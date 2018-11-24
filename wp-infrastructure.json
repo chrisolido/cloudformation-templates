@@ -119,6 +119,19 @@
                 }
             }
         },
+        "DBSecurityGroup": {
+            "Type": "AWS::RDS::DBSecurityGroup",
+            "Properties": {
+                "GroupDescription": "Database Security Group",
+                "DBSecurityGroupIngress": [
+                    {
+                        "EC2SecurityGroupName": {
+                            "Ref": "EC2SecurityGroup"
+                        }
+                    }
+                ]
+            }
+        },
         "EC2Instance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
@@ -148,22 +161,118 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum install httpd php mysql php-mysql -y\nyum update -y\nsystemctl start httpd\nsystemctl enable httpd\ncd /var/www/html\nwget https://wordpress.org/latest.tar.gz\ntar -zxvf latest.tar.gz --strip 1\nrm latest.tar.gz\ncp wp-config-sample.php wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\nyum -y update\n"
                     }
                 }
-            }
-        },
-        "DBSecurityGroup": {
-            "Type": "AWS::RDS::DBSecurityGroup",
-            "Properties": {
-                "GroupDescription": "Database Security Group",
-                "DBSecurityGroupIngress": [
-                    {
-                        "EC2SecurityGroupName": {
-                            "Ref": "EC2SecurityGroup"
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "wordpress": [
+                            "configure_cfn",
+                            "install_wordpress",
+                            "config_wordpress"
+                        ]
+                    },
+                    "configure_cfn": {
+                        "files": {
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n"
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": {
+                                    "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\nverbose=true\ninterval=5\n"
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            }
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true",
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "install_wordpress": {
+                        "packages": {
+                            "yum": {
+                                "httpd": [],
+                                "php": [],
+                                "php-mysqlnd": [],
+                                "mariadb": []
+                            }
+                        },
+                        "sources": {
+                            "/var/www/html": "http://wordpress.org/latest.tar.gz"
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "httpd": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true",
+                                    "files": [
+                                        "/etc/httpd/conf/httpd.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "config_wordpress": {
+                        "commands": {
+                            "01_copy_to_root": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp -r wordpress/* /var/www/html"
+                            },
+                            "02_clean_up": {
+                                "cwd": "/var/www/html",
+                                "command": "rm -rf wordpress"
+                            },
+                            "03_clone_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp wp-config-sample.php wp-config.php"
+                            },
+                            "04_inject_dbhost": {
+                                "cwd": "/var/www/html",
+                                "command": {
+                                    "Fn::Sub": "sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\n"
+                                }
+                            },
+                            "05_inject_dbname": {
+                                "cwd": "/var/www/html",
+                                "command": {
+                                    "Fn::Sub": "sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\n"
+                                }
+                            },
+                            "06_nject_dbuser": {
+                                "cwd": "/var/www/html",
+                                "command": {
+                                    "Fn::Sub": "sed -i 's/username_here/${DatabaseUser}/g' wp-config.php\n"
+                                }
+                            },
+                            "07_inject_dbpassword": {
+                                "cwd": "/var/www/html",
+                                "command": {
+                                    "Fn::Sub": "sed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
+                                }
+                            }
                         }
                     }
-                ]
+                }
             }
         },
         "EC2SecurityGroup": {

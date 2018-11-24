@@ -72,6 +72,12 @@ Resources:
       Engine: MariaDB
       MasterUsername: !Ref DatabaseUser
       MasterUserPassword: !Ref DatabasePassword
+  DBSecurityGroup:
+    Type: "AWS::RDS::DBSecurityGroup"
+    Properties:
+      GroupDescription: Database Security Group
+      DBSecurityGroupIngress:
+        - EC2SecurityGroupName: !Ref EC2SecurityGroup
   EC2Instance:
     Type: "AWS::EC2::Instance"
     Properties:
@@ -84,25 +90,90 @@ Resources:
         "Fn::Base64":
           !Sub |
             #!/bin/bash
-            yum install httpd php mysql php-mysql -y
-            yum update -y
-            systemctl start httpd
-            systemctl enable httpd
-            cd /var/www/html
-            wget https://wordpress.org/latest.tar.gz
-            tar -zxvf latest.tar.gz --strip 1
-            rm latest.tar.gz
-            cp wp-config-sample.php wp-config.php
-            sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
-            sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php
-            sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
-            sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
-  DBSecurityGroup:
-    Type: "AWS::RDS::DBSecurityGroup"
-    Properties:
-      GroupDescription: Database Security Group
-      DBSecurityGroupIngress:
-        - EC2SecurityGroupName: !Ref EC2SecurityGroup
+            yum update -y aws-cfn-bootstrap
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}
+            yum -y update
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          wordpress:
+            - "configure_cfn"
+            - "install_wordpress"
+            - "config_wordpress"
+        configure_cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: "true"
+                ensureRunning: "true"
+                files:
+                  - "/etc/cfn/cfn-hup.conf"
+                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+        install_wordpress:
+          packages:
+            yum:
+              httpd: []
+              php: []
+              php-mysqlnd: []
+              mariadb: []
+          sources:
+            /var/www/html: "http://wordpress.org/latest.tar.gz"
+          services:
+            sysvinit:
+              httpd:
+                enabled: "true"
+                ensureRunning: "true"
+                files :
+                  - "/etc/httpd/conf/httpd.conf"
+        config_wordpress:
+          commands:
+            01_copy_to_root:
+              cwd: "/var/www/html"
+              test: "test ! -e /var/www/html/wp-config.php"
+              command: "cp -r wordpress/* /var/www/html"
+            02_clean_up:
+              cwd: "/var/www/html"
+              command: "rm -rf wordpress"
+            03_clone_config:
+              cwd: "/var/www/html"
+              test: "test ! -e /var/www/html/wp-config.php"
+              command: "cp wp-config-sample.php wp-config.php"
+            04_inject_dbhost:
+              cwd: "/var/www/html"
+              command: !Sub |
+                sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php
+            05_inject_dbname:
+              cwd: "/var/www/html"
+              command: !Sub |
+                sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
+            06_nject_dbuser:
+              cwd: "/var/www/html"
+              command: !Sub |
+                sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
+            07_inject_dbpassword:
+              cwd: "/var/www/html"
+              command: !Sub |
+                sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
   EC2SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
