@@ -104,6 +104,7 @@ Resources:
             yum update -y
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+            # cronjob to sync to s3 bucket every 2 days
             echo "*  *  */2  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}" >> /etc/crontab
     CreationPolicy:
       ResourceSignal:
