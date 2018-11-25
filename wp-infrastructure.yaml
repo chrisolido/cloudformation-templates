@@ -61,11 +61,14 @@ Mappings:
       EC2: t2.micro
       DB: db.t2.micro
     MEDIUM:
-      EC2: t2.small
+      EC2: t3.small
       DB: db.t2.small
     LARGE:
-      EC2: t2.medium
+      EC2: t3.medium
       DB: db.t2.medium
+    XLARGE:
+      EC2: m5.large
+      DB: db.t2.large
 Resources:
   DBInstance:
     Type: AWS::RDS::DBInstance
