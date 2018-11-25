@@ -186,7 +186,7 @@
                                 "content": {
                                     "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n"
                                 },
-                                "mode": "000400",
+                                "mode": 256,
                                 "owner": "root",
                                 "group": "root"
                             },
@@ -194,7 +194,7 @@
                                 "content": {
                                     "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\nverbose=true\ninterval=5\n"
                                 },
-                                "mode": "000400",
+                                "mode": 256,
                                 "owner": "root",
                                 "group": "root"
                             }
@@ -202,8 +202,8 @@
                         "services": {
                             "sysvinit": {
                                 "cfn-hup": {
-                                    "enabled": "true",
-                                    "ensureRunning": "true",
+                                    "enabled": true,
+                                    "ensureRunning": true,
                                     "files": [
                                         "/etc/cfn/cfn-hup.conf",
                                         "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
@@ -227,8 +227,8 @@
                         "services": {
                             "sysvinit": {
                                 "httpd": {
-                                    "enabled": "true",
-                                    "ensureRunning": "true",
+                                    "enabled": true,
+                                    "ensureRunning": true,
                                     "files": [
                                         "/etc/httpd/conf/httpd.conf"
                                     ]
