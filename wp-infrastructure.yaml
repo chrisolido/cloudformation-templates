@@ -122,6 +122,7 @@ Resources:
               owner: root
               group: root
           services:
+            # redirects to systemd
             sysvinit:
               cfn-hup:
                 enabled: "true"
@@ -139,6 +140,7 @@ Resources:
           sources:
             /var/www/html: "http://wordpress.org/latest.tar.gz"
           services:
+            # redirects to systemd
             sysvinit:
               httpd:
                 enabled: "true"
