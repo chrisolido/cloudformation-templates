@@ -91,12 +91,10 @@ Resources:
           !Sub |
             #!/bin/bash
             yum update -y
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
     CreationPolicy:
       ResourceSignal:
-        Count: 2
         Timeout: PT15M
     Metadata:
       AWS::CloudFormation::Init:
