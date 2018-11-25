@@ -51,14 +51,14 @@ Mappings:
       AMALINUX: ami-0112d42866980b373
   InstanceSize:
     SMALL:
-      "EC2" : "t2.micro"
-      "DB" : "db.t2.micro"
+      EC2: "t2.micro"
+      DB: "db.t2.micro"
     MEDIUM:
-      "EC2" : "t2.small"
-      "DB" : "db.t2.small"
+      EC2: "t2.small"
+      DB: "db.t2.small"
     LARGE:
-      "EC2" : "t2.medium"
-      "DB" : "db.t2.medium"
+      EC2: t2.medium
+      DB: "db.t2.medium"
 Resources:
   DBInstance:
     Type: "AWS::RDS::DBInstance"
@@ -102,9 +102,9 @@ Resources:
       AWS::CloudFormation::Init:
         configSets:
           wordpress:
-            - "configure_cfn"
-            - "install_wordpress"
-            - "config_wordpress"
+            - configure_cfn
+            - install_wordpress
+            - config_wordpress
         configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
@@ -114,8 +114,8 @@ Resources:
                 path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init
                 action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}
               mode: "000400"
-              owner: root
-              group: root
+              owner: "root"
+              group: "root"
             /etc/cfn/cfn-hup.conf:
               content: !Sub |
                 [main]
@@ -124,8 +124,8 @@ Resources:
                 verbose=true
                 interval=5
               mode: "000400"
-              owner: root
-              group: root
+              owner: "root"
+              group: "root"
           services:
             # redirects to systemd
             sysvinit:
@@ -133,8 +133,8 @@ Resources:
                 enabled: "true"
                 ensureRunning: "true"
                 files:
-                  - "/etc/cfn/cfn-hup.conf"
-                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
         install_wordpress:
           packages:
             yum:
@@ -151,34 +151,34 @@ Resources:
                 enabled: "true"
                 ensureRunning: "true"
                 files :
-                  - "/etc/httpd/conf/httpd.conf"
+                  - /etc/httpd/conf/httpd.conf
         config_wordpress:
           commands:
             01_copy_to_root:
-              cwd: "/var/www/html"
-              test: "test ! -e /var/www/html/wp-config.php"
-              command: "cp -r wordpress/* /var/www/html"
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp -r wordpress/* /var/www/html
             02_clean_up:
-              cwd: "/var/www/html"
-              command: "rm -rf wordpress"
+              cwd: /var/www/html
+              command: rm -rf wordpress
             03_clone_config:
-              cwd: "/var/www/html"
-              test: "test ! -e /var/www/html/wp-config.php"
-              command: "cp wp-config-sample.php wp-config.php"
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp wp-config-sample.php wp-config.php
             04_inject_dbhost:
-              cwd: "/var/www/html"
+              cwd: /var/www/html
               command: !Sub |
                 sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php
             05_inject_dbname:
-              cwd: "/var/www/html"
+              cwd: /var/www/html
               command: !Sub |
                 sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
             06_nject_dbuser:
-              cwd: "/var/www/html"
+              cwd: /var/www/html
               command: !Sub |
                 sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
             07_inject_dbpassword:
-              cwd: "/var/www/html"
+              cwd: /var/www/html
               command: !Sub |
                 sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
   EC2SecurityGroup:
