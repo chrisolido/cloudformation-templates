@@ -17,6 +17,13 @@ Parameters:
     Type: String
     Default: wordpress
     NoEcho: true
+  DBSnapshotToRestore:
+    Type: String
+    Default: ""
+    Description: RDS Snapshot to restore (not required)i
+Conditions:
+  isRestore:
+    !Not [!Equals [!Ref DBSnapshotToRestore, ""]]
 Mappings:
   RegionMap:
     us-east-1:
@@ -66,13 +73,14 @@ Resources:
     Properties:
       AllocatedStorage: "5"
       StorageType: gp2
-      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
-      DBSecurityGroups:
-        - !Ref DBSecurityGroup
       DBName: !Ref DatabaseName
       Engine: MariaDB
-      MasterUsername: !Ref DatabaseUser
-      MasterUserPassword: !Ref DatabasePassword
+      MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
+      MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
+      DBSnapshotIdentifier: !If [isRestore, !Ref DBSnapshotToRestore, !Ref "AWS::NoValue"]
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
+      DBSecurityGroups:
+        - !Ref DBSecurityGroup
   DBSecurityGroup:
     Type: AWS::RDS::DBSecurityGroup
     Properties:
