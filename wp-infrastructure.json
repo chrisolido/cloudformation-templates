@@ -90,6 +90,7 @@
     "Resources": {
         "DBInstance": {
             "Type": "AWS::RDS::DBInstance",
+            "DeletionPolicy": "Snapshot",
             "Properties": {
                 "AllocatedStorage": "5",
                 "StorageType": "gp2",
@@ -134,6 +135,7 @@
         },
         "EC2Instance": {
             "Type": "AWS::EC2::Instance",
+            "DeletionPolicy": "Delete",
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -301,7 +303,8 @@
             }
         },
         "S3Bucket": {
-            "Type": "AWS::S3::Bucket"
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain"
         }
     },
     "Outputs": {

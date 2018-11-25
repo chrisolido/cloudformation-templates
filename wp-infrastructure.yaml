@@ -62,6 +62,7 @@ Mappings:
 Resources:
   DBInstance:
     Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
     Properties:
       AllocatedStorage: "5"
       StorageType: gp2
@@ -80,6 +81,7 @@ Resources:
         - EC2SecurityGroupName: !Ref EC2SecurityGroup
   EC2Instance:
     Type: AWS::EC2::Instance
+    DeletionPolicy: Delete
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
@@ -194,6 +196,7 @@ Resources:
         CidrIp: 0.0.0.0/0
   S3Bucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
 Outputs:
   Website:
     Description: The Public DNS for the EC2 Instance
