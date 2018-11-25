@@ -22,6 +22,25 @@
             "Type": "String",
             "Default": "wordpress",
             "NoEcho": true
+        },
+        "SnapshotToRestore": {
+            "Type": "String",
+            "Default": "",
+            "Description": "Restore from existing RDS snapshot (not required)"
+        }
+    },
+    "Conditions": {
+        "isRestore": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        ""
+                    ]
+                }
+            ]
         }
     },
     "Mappings": {
@@ -94,6 +113,43 @@
             "Properties": {
                 "AllocatedStorage": "5",
                 "StorageType": "gp2",
+                "DBName": {
+                    "Ref": "DatabaseName"
+                },
+                "Engine": "MariaDB",
+                "MasterUsername": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseUser"
+                        }
+                    ]
+                },
+                "MasterUserPassword": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabasePassword"
+                        }
+                    ]
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
                 "DBInstanceClass": {
                     "Fn::FindInMap": [
                         "InstanceSize",
@@ -107,17 +163,7 @@
                     {
                         "Ref": "DBSecurityGroup"
                     }
-                ],
-                "DBName": {
-                    "Ref": "DatabaseName"
-                },
-                "Engine": "MariaDB",
-                "MasterUsername": {
-                    "Ref": "DatabaseUser"
-                },
-                "MasterUserPassword": {
-                    "Ref": "DatabasePassword"
-                }
+                ]
             }
         },
         "DBSecurityGroup": {
