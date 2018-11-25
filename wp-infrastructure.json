@@ -201,6 +201,9 @@
                         "EC2"
                     ]
                 },
+                "IamInstanceProfile": {
+                    "Ref": "EC2InstanceProfile"
+                },
                 "KeyName": "AdvancedCFN",
                 "SecurityGroupIds": [
                     {
@@ -209,7 +212,7 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\necho \"*  *  */2  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}\" >> /etc/crontab\n"
                     }
                 }
             },
@@ -344,6 +347,68 @@
                         "FromPort": 80,
                         "ToPort": 80,
                         "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EC2Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "EC2SyncS3Bucket",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "s3:DeleteObject",
+                                        "s3:ListBucket",
+                                        "s3:GetObject",
+                                        "s3:GetBucketLocation",
+                                        "s3:PutObject",
+                                        "s3:PutObjectAcl"
+                                    ],
+                                    "Resource": [
+                                        {
+                                            "Fn::Sub": "${S3Bucket.Arn}"
+                                        },
+                                        {
+                                            "Fn::Sub": "${S3Bucket.Arn}/*"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "EC2InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "EC2Role"
                     }
                 ]
             }
