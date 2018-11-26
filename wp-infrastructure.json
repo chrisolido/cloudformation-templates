@@ -119,7 +119,15 @@
                 "AllocatedStorage": "5",
                 "StorageType": "gp2",
                 "DBName": {
-                    "Ref": "DatabaseName"
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseName"
+                        }
+                    ]
                 },
                 "Engine": "MariaDB",
                 "MasterUsername": {

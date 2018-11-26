@@ -77,7 +77,7 @@ Resources:
     Properties:
       AllocatedStorage: "5"
       StorageType: gp2
-      DBName: !Ref DatabaseName
+      DBName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName]
       Engine: MariaDB
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
       MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
