@@ -199,7 +199,7 @@ Resources:
               cwd: /var/www/html
               command: !Sub |
                 sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
-            06_nject_dbuser:
+            06_inject_dbuser:
               cwd: /var/www/html
               command: !Sub |
                 sed -i 's/username_here/${DatabaseUser}/g' wp-config.php
@@ -207,21 +207,33 @@ Resources:
               cwd: /var/www/html
               command: !Sub |
                 sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
-            08a_store_instance_url:
+            08_using_direct_ftp:
               cwd: /var/www/html
+              command: echo "define('FS_METHOD','direct');" >> wp-config.php
+            09a_store_instance_url:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: "curl http://169.254.169.254/latest/meta-data/public-hostname > dns.hostname"
-            08b_inject_url_1: # this allows a restore & change of IP without causing WP errors.
+            09b_inject_url_1: # this allows a restore & change of IP without causing WP errors.
               cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: URL=`cat dns.hostname` && echo "define('WP_SITEURL', 'http://$URL');" >> wp-config.php
-            08c_inject_url_2: # this allows a restore & change of IP without causing WP errors.
+            09c_inject_url_2: # this allows a restore & change of IP without causing WP errors.
               cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: URL=`cat dns.hostname` && echo "define('WP_HOME', 'http://$URL');" >> wp-config.php
-            09a_update_theme_1:
+            10a_update_theme_1:
               cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: URL=`cat dns.hostname` && echo "update_option('siteurl','http://$URL');" >> wp-content/themes/twentyseventeen/functions.php
-            09b_update_theme_2:
+            10b_update_theme_2:
               cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: URL=`cat dns.hostname` && echo "update_option('home','http://$URL');" >> wp-content/themes/twentyseventeen/functions.php
+            11_clean_up:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
+              command: rm -f wp-config-sample.php && rm -f dns.hostname
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
