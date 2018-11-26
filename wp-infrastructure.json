@@ -29,7 +29,8 @@
             "Type": "String",
             "Default": "wordpress",
             "MinLength": 8,
-            "MaxLength": 40,
+            "MaxLength": 41,
+            "AllowedPattern": "[a-zA-Z0-9]*",
             "NoEcho": true
         },
         "KeyPair": {
