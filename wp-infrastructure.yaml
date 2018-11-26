@@ -25,7 +25,7 @@ Parameters:
     Default: wordpress
     MinLength: 8
     MaxLength: 41
-    AllowedPattern: "[a-zA-Z0-9]*"
+    AllowedPattern: "[a-zA-Z0-9~!#$%^&*()]*"
     NoEcho: true
   KeyPair:
     Description: Amazon EC2 Key Pair for SSH Access
