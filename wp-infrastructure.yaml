@@ -216,7 +216,7 @@ Resources:
                 echo "update_option('siteurl','http://$URL');" >> wp-content/themes/twentyseventeen/functions.php
                 echo "update_option('home','http://$URL');" >> wp-content/themes/twentyseventeen/functions.php
             06_clean_up:
-              # this prevents initialization commands to be re-run
+              # this prevents init commands to be re-run
               cwd: /var/www/html
               command: |
                 rm -rf wordpress
