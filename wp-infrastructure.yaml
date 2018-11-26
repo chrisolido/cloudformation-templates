@@ -189,24 +189,28 @@ Resources:
                   - /etc/httpd/conf/httpd.conf
         config_wordpress:
           commands:
+            00_sync:
+              cwd: /var/www/html
+              test: test ! -e wp-config.php
+              command: !Sub aws s3 sync s3://${S3Bucket} /var/www/html
             01_copy_to_root:
               cwd: /var/www/html
-              test: test ! -e /var/www/html/wp-config.php
+              test: test ! -e wp-config.php
               command: cp -r wordpress/* /var/www/html
             02_clone_wp_config:
               cwd: /var/www/html
-              test: test ! -e /var/www/html/wp-config.php
+              test: test ! -e wp-config.php
               command: cp wp-config-sample.php wp-config.php
             03_direct_ftp_config:
               cwd: /var/www/html
-              test: test -e /var/www/html/wp-config-sample.php
+              test: test -e wp-config-sample.php
               command: |
                 echo "define('FS_METHOD', 'direct');" >> wp-config.php
                 chmod -R 755 wp-content
                 chown -R apache:apache wp-content
             04_database_config:
               cwd: /var/www/html
-              test: test -e /var/www/html/wp-config-sample.php
+              test: test -e wp-config-sample.php
               command: !Sub |
                 sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php
                 sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php
@@ -215,7 +219,7 @@ Resources:
             05_wp_url_config:
               # this allows a restore & change of IP without causing WP errors.
               cwd: /var/www/html
-              test: test -e /var/www/html/wp-config-sample.php
+              test: test -e wp-config-sample.php
               command: |
                 URL=$(curl http://169.254.169.254/latest/meta-data/public-hostname)
                 # update url in WP config
