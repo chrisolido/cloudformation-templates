@@ -321,72 +321,31 @@
                                 "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": "cp -r wordpress/* /var/www/html"
                             },
-                            "02_clean_up": {
-                                "cwd": "/var/www/html",
-                                "command": "rm -rf wordpress"
-                            },
-                            "03_clone_config": {
+                            "02_clone_wp_config": {
                                 "cwd": "/var/www/html",
                                 "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": "cp wp-config-sample.php wp-config.php"
                             },
-                            "04_inject_dbhost": {
+                            "03_direct_ftp_config": {
                                 "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": "echo \"define('FS_METHOD', 'direct');\" >> wp-config.php\nchmod -R 755 wp-content\nchown -R apache:apache wp-content\n"
+                            },
+                            "04_database_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": {
-                                    "Fn::Sub": "sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\n"
+                                    "Fn::Sub": "sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
                                 }
                             },
-                            "05_inject_dbname": {
-                                "cwd": "/var/www/html",
-                                "command": {
-                                    "Fn::Sub": "sed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\n"
-                                }
-                            },
-                            "06_inject_dbuser": {
-                                "cwd": "/var/www/html",
-                                "command": {
-                                    "Fn::Sub": "sed -i 's/username_here/${DatabaseUser}/g' wp-config.php\n"
-                                }
-                            },
-                            "07_inject_dbpassword": {
-                                "cwd": "/var/www/html",
-                                "command": {
-                                    "Fn::Sub": "sed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
-                                }
-                            },
-                            "08_using_direct_ftp": {
-                                "cwd": "/var/www/html",
-                                "command": "echo \"define('FS_METHOD','direct');\" >> wp-config.php"
-                            },
-                            "09a_store_instance_url": {
+                            "05_wp_url_config": {
                                 "cwd": "/var/www/html",
                                 "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "curl http://169.254.169.254/latest/meta-data/public-hostname > dns.hostname"
+                                "command": "URL=$(curl http://169.254.169.254/latest/meta-data/public-hostname)\n# update url in WP config\necho \"define('WP_SITEURL', 'http://$URL');\" >> wp-config.php\necho \"define('WP_HOME', 'http://$URL');\" >> wp-config.php\n# update url in WP theme\necho \"update_option('siteurl','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\necho \"update_option('home','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\n"
                             },
-                            "09b_inject_url_1": {
+                            "06_clean_up": {
                                 "cwd": "/var/www/html",
-                                "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "URL=`cat dns.hostname` && echo \"define('WP_SITEURL', 'http://$URL');\" >> wp-config.php"
-                            },
-                            "09c_inject_url_2": {
-                                "cwd": "/var/www/html",
-                                "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "URL=`cat dns.hostname` && echo \"define('WP_HOME', 'http://$URL');\" >> wp-config.php"
-                            },
-                            "10a_update_theme_1": {
-                                "cwd": "/var/www/html",
-                                "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "URL=`cat dns.hostname` && echo \"update_option('siteurl','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php"
-                            },
-                            "10b_update_theme_2": {
-                                "cwd": "/var/www/html",
-                                "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "URL=`cat dns.hostname` && echo \"update_option('home','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php"
-                            },
-                            "11_clean_up": {
-                                "cwd": "/var/www/html",
-                                "test": "test -e /var/www/html/wp-config-sample.php",
-                                "command": "rm -f wp-config-sample.php && rm -f dns.hostname"
+                                "command": "rm -rf wordpress\nrm -f wp-config-sample.php\n"
                             }
                         }
                     }

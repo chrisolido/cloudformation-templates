@@ -186,12 +186,15 @@ Resources:
               command: cp -r wordpress/* /var/www/html
             02_clone_wp_config:
               cwd: /var/www/html
-              test: test -e /var/www/html/wp-config-sample.php
+              test: test ! -e /var/www/html/wp-config.php
               command: cp wp-config-sample.php wp-config.php
             03_direct_ftp_config:
               cwd: /var/www/html
               test: test -e /var/www/html/wp-config-sample.php
-              command: echo "define('FS_METHOD','direct');" >> wp-config.php
+              command: |
+                echo "define('FS_METHOD', 'direct');" >> wp-config.php
+                chmod -R 755 wp-content
+                chown -R apache:apache wp-content
             04_database_config:
               cwd: /var/www/html
               test: test -e /var/www/html/wp-config-sample.php
@@ -203,9 +206,9 @@ Resources:
             05_wp_url_config:
               # this allows a restore & change of IP without causing WP errors.
               cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
               command: |
-                curl http://169.254.169.254/latest/meta-data/public-hostname > dns.hostname
-                URL=`cat dns.hostname`
+                URL=$(curl http://169.254.169.254/latest/meta-data/public-hostname)
                 # update url in WP config
                 echo "define('WP_SITEURL', 'http://$URL');" >> wp-config.php
                 echo "define('WP_HOME', 'http://$URL');" >> wp-config.php
@@ -218,7 +221,6 @@ Resources:
               command: |
                 rm -rf wordpress
                 rm -f wp-config-sample.php
-                rm -f dns.hostname
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
