@@ -6,6 +6,7 @@ Parameters:
       - SMALL
       - MEDIUM
       - LARGE
+      - XLARGE
     Description: Select Environment Size (S,M,L)
   DatabaseName:
     Type: String
