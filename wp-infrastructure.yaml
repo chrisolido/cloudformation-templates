@@ -24,15 +24,15 @@ Parameters:
   SSHLocation:
     Description: The IP address range that can be used to SSH to the EC2 instances
     Type: String
-    MinLength: '9'
-    MaxLength: '18'
+    MinLength: "9"
+    MaxLength: "18"
     Default: 0.0.0.0/0
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
     ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
   SnapshotToRestore:
+    Description: Restore from existing RDS snapshot (not required)
     Type: String
     Default: ""
-    Description: Restore from existing RDS snapshot (not required)
 Conditions:
   isRestore:
     !Not [!Equals [!Ref SnapshotToRestore, ""]]
@@ -284,6 +284,6 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 Outputs:
-  Website:
+  PublicURL:
     Description: The Public DNS for the EC2 Instance
     Value: !Sub http://${EC2Instance.PublicDnsName}

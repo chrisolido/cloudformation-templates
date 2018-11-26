@@ -38,9 +38,9 @@
             "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
         },
         "SnapshotToRestore": {
+            "Description": "Restore from existing RDS snapshot (not required)",
             "Type": "String",
-            "Default": "",
-            "Description": "Restore from existing RDS snapshot (not required)"
+            "Default": ""
         }
     },
     "Conditions": {
@@ -488,7 +488,7 @@
         }
     },
     "Outputs": {
-        "Website": {
+        "PublicURL": {
             "Description": "The Public DNS for the EC2 Instance",
             "Value": {
                 "Fn::Sub": "http://${EC2Instance.PublicDnsName}"
