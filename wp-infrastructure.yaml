@@ -11,12 +11,20 @@ Parameters:
   DatabaseName:
     Type: String
     Default: wordpress
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
   DatabaseUser:
     Type: String
     Default: admin
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
   DatabasePassword:
     Type: String
     Default: wordpress
+    MinLength: 8
+    MaxLength: 40
     NoEcho: true
   KeyPair:
     Description: Amazon EC2 Key Pair for SSH Access
