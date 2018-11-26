@@ -244,7 +244,10 @@
                 },
                 "SecurityGroupIds": [
                     {
-                        "Ref": "EC2SecurityGroup"
+                        "Fn::GetAtt": [
+                            "EC2SecurityGroup",
+                            "GroupId"
+                        ]
                     }
                 ],
                 "UserData": {
