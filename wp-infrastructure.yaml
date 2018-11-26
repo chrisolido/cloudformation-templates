@@ -190,6 +190,7 @@ Resources:
         config_wordpress:
           commands:
             00_sync:
+              # for updated stack new instances
               cwd: /var/www/html
               test: test ! -e wp-config.php
               command: !Sub aws s3 sync s3://${S3Bucket} /var/www/html
