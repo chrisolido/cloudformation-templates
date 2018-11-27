@@ -1,0 +1,266 @@
+Parameters:
+  VPCId:
+    Type: AWS::EC2::VPC::Id
+    Description: Shared Infrastructure VPC to use
+  PublicRouteTable:
+    Type: String
+    Description: Shared Infrastructure Public Route Table
+  PrivateRouteTable1:
+    Type: String
+    Description: Shared Infrastructure Private Route Table - 1
+  PrivateRouteTable2:
+    Type: String
+    Description: Shared Infrastructure Private Route Table - 2
+  AppVersion:
+    Type: String
+    Description: Application Version to Deploy
+  AppBucketURL:
+    Type: String
+    Description: Application Bucket Location
+  Environment:
+    Type: String
+    Description: Type of environment to provision
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - TEST
+      - PROD
+  AppPublicCIDR1:
+    Type: String
+    Description: CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/22)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+  AppPublicCIDR2:
+    Type: String
+    Description: CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/22)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+  AppPrivateCIDR1:
+    Type: String
+    Description: CIDR to use for Private Subnet 1 for App Environment (x.x.x.x/22)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+  AppPrivateCIDR2:
+    Type: String
+    Description: CIDR to use for Private Subnet 2 for App Environment (x.x.x.x/22)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMALINUX: ami-013be31976ca2c322
+    us-east-2:
+      AMALINUX: ami-0b59bfac6be064b78
+    us-west-1:
+      AMALINUX: ami-01beb64058d271bc4
+    us-west-2:
+      AMALINUX: ami-061e7ebbc234015fe
+    ca-central-1:
+      AMALINUX: ami-076b4adb3f90cd384
+    eu-central-1:
+      AMALINUX: ami-02ea8f348fa28c108
+    eu-west-1:
+      AMALINUX: ami-0a5e707736615003c
+    eu-west-2:
+      AMALINUX: ami-0274e11dced17bb5b
+    eu-west-3:
+      AMALINUX: ami-051707cdba246187b
+    ap-northeast-1:
+      AMALINUX: ami-0a2de1c3b415889d2
+    ap-northeast-2:
+      AMALINUX: ami-0b4fdb56a00adb616
+    ap-south-1:
+      AMALINUX: ami-06bcd1131b2f55803
+    ap-southeast-1:
+      AMALINUX: ami-085fd1bd447be68e8
+    ap-southeast-2:
+      AMALINUX: ami-0b8dea0e70b969adc
+    sa-east-1:
+      AMALINUX: ami-0112d42866980b373
+  InstanceSize:
+    DEV:
+      "EC2" : "t2.micro"
+    TEST:
+      "EC2" : "t2.micro"
+    PROD:
+      "EC2" : "t2.small"
+Resources:
+  SubnetPublic1: # Public Subnet for App Env in AZ - 1
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Ref AppPublicCIDR1
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPCId
+  SubnetPrivate1: # Private Subnet for App Env in AZ - 1
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Ref AppPrivateCIDR1
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPCId
+  SubnetPublic2: # Public Subnet for App Env in AZ - 2  (not used yet)
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Ref AppPublicCIDR2
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPCId
+  SubnetPrivate2: # Private Subnet for App Env in AZ - 2 (not used yet)
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Ref AppPrivateCIDR2
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPCId
+  SubnetRouteTableAssociatePublic1: # Associates the subnet with a route table - passed via parameter
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref SubnetPublic1
+  SubnetRouteTableAssociatePublic2: # Associates the subnet with a route table - passed via parameter
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref SubnetPublic2 # Associates the subnet with a route table - passed via parameter
+  SubnetRouteTableAssociatePrivate1: # Associates the subnet with a route table - passed via parameter
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref SubnetPrivate1 # Associates the subnet with a route table - passed via parameter
+  SubnetRouteTableAssociatePrivate2: # Associates the subnet with a route table - passed via parameter
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref SubnetPrivate2 # Associates the subnet with a route table - passed via parameter
+  ElasticLoadBalancer:
+    Type: "AWS::ElasticLoadBalancing::LoadBalancer"
+    Properties:
+      CrossZone: true
+      Instances:
+        - !Ref EC2Instance
+      Listeners:
+        -
+          InstancePort: "80"
+          InstanceProtocol: HTTP
+          LoadBalancerPort: "80"
+          Protocol: HTTP
+      Subnets:
+        - !Ref SubnetPublic1
+        - !Ref SubnetPublic2
+      SecurityGroups:
+        - !Ref SecurityGroup
+  SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " v", !Ref AppVersion, " - ", !Ref Environment]]
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: 80
+          FromPort: 80
+        -
+          CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          ToPort: 22
+          FromPort: 22
+      SecurityGroupEgress:
+        -
+          CidrIp: 0.0.0.0/0
+          ToPort: -1
+          IpProtocol: "-1"
+  EC2Instance: # for now this is in a public subnet, needs to be changed.
+    Type: "AWS::EC2::Instance"
+    DeletionPolicy: Delete
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
+      InstanceType: !FindInMap [InstanceSize, !Ref Environment, EC2]
+      KeyName: AdvancedCFN
+      SecurityGroupIds:
+        - !GetAtt SecurityGroup.GroupId
+      SubnetId: !Ref SubnetPublic1
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash
+            yum update -y aws-cfn-bootstrap # good practice - always do this.
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
+            yum -y update
+            curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          www:
+            - "configure_cfn"
+            - "install_www"
+            - "config_app"
+        configure_cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: "true"
+                ensureRunning: "true"
+                files:
+                  - "/etc/cfn/cfn-hup.conf"
+                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+        install_www:
+          packages:
+            yum:
+              httpd: []
+              php: []
+          services:
+            sysvinit:
+              httpd:
+                enabled: "true"
+                ensureRunning: "true"
+        config_app:
+          sources:
+            /var/www/html: !Join ["", [!Ref AppBucketURL, "/App-", !Ref AppVersion, ".zip"]]
+          files:
+            /var/www/html/test.pattern.zip:
+              source: !Join ["", [!Ref AppBucketURL, "/Test-", !Ref AppVersion, ".zip"]]
+              mode: "000644"
+              owner: "root"
+              group: "root"
+          commands:
+            unzippattern:
+              cwd: "/var/www/html"
+              command: "unzip -o test.pattern.zip"
+Outputs:
+  Endpoint:
+    Description: Application URL
+    Value: !Sub "http://${ElasticLoadBalancer.DNSName}/app.php"
