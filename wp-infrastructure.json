@@ -1,4 +1,5 @@
 {
+    "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
         "EnvironmentSize": {
             "Type": "String",
@@ -252,7 +253,7 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n# cronjob to sync to s3 bucket\necho \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}\" >> /etc/crontab\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n"
                     }
                 }
             },
@@ -330,39 +331,46 @@
                         "commands": {
                             "00_sync": {
                                 "cwd": "/var/www/html",
-                                "test": "test ! -e wp-config.php",
+                                "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": {
                                     "Fn::Sub": "aws s3 sync s3://${S3Bucket} /var/www/html"
                                 }
                             },
                             "01_copy_to_root": {
                                 "cwd": "/var/www/html",
-                                "test": "test ! -e wp-config.php",
+                                "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": "cp -r wordpress/* /var/www/html"
                             },
                             "02_clone_wp_config": {
                                 "cwd": "/var/www/html",
-                                "test": "test ! -e wp-config.php",
+                                "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": "cp wp-config-sample.php wp-config.php"
                             },
                             "03_direct_ftp_config": {
                                 "cwd": "/var/www/html",
-                                "test": "test -e wp-config-sample.php",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": "echo \"define('FS_METHOD', 'direct');\" >> wp-config.php\nchmod -R 755 wp-content\nchown -R apache:apache wp-content\n"
                             },
                             "04_database_config": {
                                 "cwd": "/var/www/html",
-                                "test": "test -e wp-config-sample.php",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": {
                                     "Fn::Sub": "sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
                                 }
                             },
                             "05_wp_url_config": {
                                 "cwd": "/var/www/html",
-                                "test": "test -e wp-config-sample.php",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": "URL=$(curl http://169.254.169.254/latest/meta-data/public-hostname)\n# update url in WP config\necho \"define('WP_SITEURL', 'http://$URL');\" >> wp-config.php\necho \"define('WP_HOME', 'http://$URL');\" >> wp-config.php\n# update url in WP theme\necho \"update_option('siteurl','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\necho \"update_option('home','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\n"
                             },
-                            "06_clean_up": {
+                            "06_setup_cron": {
+                                "cwd": "/etc",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": {
+                                    "Fn::Sub": "echo \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}\" >> crontab\n"
+                                }
+                            },
+                            "07_clean_up": {
                                 "cwd": "/var/www/html",
                                 "command": "rm -rf wordpress\nrm -f wp-config-sample.php\n"
                             }
@@ -457,7 +465,7 @@
         },
         "S3Bucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Retain",
+            "DeletionPolicy": "Delete",
             "Properties": {
                 "LifecycleConfiguration": {
                     "Rules": [
