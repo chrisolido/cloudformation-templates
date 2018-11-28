@@ -1,4 +1,4 @@
-import boto3, netaddr, random, string, requests, json
+import boto3, netaddr, random, string, requests, json, os
 
 from netaddr import IPSet, IPNetwork
 from boto3.dynamodb.conditions import Key, Attr
@@ -56,16 +56,13 @@ def is_cidr_in_table(cidr, ddb_t):
         return True
     return False
 
-def is_cidr_reserved(cidr, vpccidr):
-    """ Check if CIDR is in the first 2 x /22 in the VPC Range """
+def is_cidr_reserved(cidr):
+    """ Check if CIDR is already reserved"""
     cidr = str(cidr)
-    vpc = IPNetwork(vpccidr)
-    reserved1 = list(vpc.subnet(22))[0]
-    reserved2 = list(vpc.subnet(22))[1]
+    reserved1 = os.getenv('ReservedCIDR1', None)
+    reserved2 = os.getenv('ReservedCIDR2', None)
 
-    if reserved1 == IPNetwork(cidr).supernet(22)[0] or reserved2 == IPNetwork(cidr).supernet(22)[0]:
-        return True
-    return False
+    return cidr == reserved1 or cidr == reserved2
 
 def handler(event, context):
     """ Attempt to allocate 4 IP ranges from a VPC CIDR Block"""
