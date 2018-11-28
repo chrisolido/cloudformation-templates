@@ -1,16 +1,10 @@
 Parameters:
   VPCId:
     Type: AWS::EC2::VPC::Id
-    Description: Shared Infrastructure VPC to use
+    Description: Shared VPC Id
   PublicRouteTable:
     Type: String
-    Description: Shared Infrastructure Public Route Table
-  PrivateRouteTable1:
-    Type: String
-    Description: Shared Infrastructure Private Route Table - 1
-  PrivateRouteTable2:
-    Type: String
-    Description: Shared Infrastructure Private Route Table - 2
+    Description: Shared VPC Public Route Table
   AppVersion:
     Type: String
     Description: Application Version to Deploy
@@ -27,32 +21,18 @@ Parameters:
       - PROD
   AppPublicCIDR1:
     Type: String
-    Description: CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/22)
+    Description: CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/24)
     MinLength: 9
     MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
   AppPublicCIDR2:
     Type: String
-    Description: CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/22)
+    Description: CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/24)
     MinLength: 9
     MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
-  AppPrivateCIDR1:
-    Type: String
-    Description: CIDR to use for Private Subnet 1 for App Environment (x.x.x.x/22)
-    MinLength: 9
-    MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
-  AppPrivateCIDR2:
-    Type: String
-    Description: CIDR to use for Private Subnet 2 for App Environment (x.x.x.x/22)
-    MinLength: 9
-    MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/22
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
 Mappings:
   RegionMap:
     us-east-1:
@@ -93,54 +73,30 @@ Mappings:
     PROD:
       "EC2" : "t2.small"
 Resources:
-  SubnetPublic1: # Public Subnet for App Env in AZ - 1
+  PublicSubnet1: # Public Subnet for App Env in AZ - 1
     Type: "AWS::EC2::Subnet"
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: !Ref AppPublicCIDR1
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPCId
-  SubnetPrivate1: # Private Subnet for App Env in AZ - 1
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      AvailabilityZone: !Select [0, !GetAZs ]
-      CidrBlock: !Ref AppPrivateCIDR1
-      MapPublicIpOnLaunch: false
-      VpcId: !Ref VPCId
-  SubnetPublic2: # Public Subnet for App Env in AZ - 2  (not used yet)
+  PublicSubnet2: # Public Subnet for App Env in AZ - 2  (not used yet)
     Type: "AWS::EC2::Subnet"
     Properties:
       AvailabilityZone: !Select [1, !GetAZs ]
       CidrBlock: !Ref AppPublicCIDR2
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPCId
-  SubnetPrivate2: # Private Subnet for App Env in AZ - 2 (not used yet)
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      AvailabilityZone: !Select [1, !GetAZs ]
-      CidrBlock: !Ref AppPrivateCIDR2
-      MapPublicIpOnLaunch: false
-      VpcId: !Ref VPCId
   SubnetRouteTableAssociatePublic1: # Associates the subnet with a route table - passed via parameter
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref SubnetPublic1
+      SubnetId: !Ref PublicSubnet1
   SubnetRouteTableAssociatePublic2: # Associates the subnet with a route table - passed via parameter
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref SubnetPublic2 # Associates the subnet with a route table - passed via parameter
-  SubnetRouteTableAssociatePrivate1: # Associates the subnet with a route table - passed via parameter
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable1
-      SubnetId: !Ref SubnetPrivate1 # Associates the subnet with a route table - passed via parameter
-  SubnetRouteTableAssociatePrivate2: # Associates the subnet with a route table - passed via parameter
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable2
-      SubnetId: !Ref SubnetPrivate2 # Associates the subnet with a route table - passed via parameter
+      SubnetId: !Ref PublicSubnet2 # Associates the subnet with a route table - passed via parameter
   ElasticLoadBalancer:
     Type: "AWS::ElasticLoadBalancing::LoadBalancer"
     Properties:
@@ -154,8 +110,8 @@ Resources:
           LoadBalancerPort: "80"
           Protocol: HTTP
       Subnets:
-        - !Ref SubnetPublic1
-        - !Ref SubnetPublic2
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
       SecurityGroups:
         - !Ref SecurityGroup
   SecurityGroup:
@@ -191,7 +147,7 @@ Resources:
       KeyName: AdvancedCFN
       SecurityGroupIds:
         - !GetAtt SecurityGroup.GroupId
-      SubnetId: !Ref SubnetPublic1
+      SubnetId: !Ref PublicSubnet1
       UserData:
         "Fn::Base64":
           !Sub |

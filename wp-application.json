@@ -2,19 +2,11 @@
     "Parameters": {
         "VPCId": {
             "Type": "AWS::EC2::VPC::Id",
-            "Description": "Shared Infrastructure VPC to use"
+            "Description": "Shared VPC Id"
         },
         "PublicRouteTable": {
             "Type": "String",
-            "Description": "Shared Infrastructure Public Route Table"
-        },
-        "PrivateRouteTable1": {
-            "Type": "String",
-            "Description": "Shared Infrastructure Private Route Table - 1"
-        },
-        "PrivateRouteTable2": {
-            "Type": "String",
-            "Description": "Shared Infrastructure Private Route Table - 2"
+            "Description": "Shared VPC Public Route Table"
         },
         "AppVersion": {
             "Type": "String",
@@ -36,35 +28,19 @@
         },
         "AppPublicCIDR1": {
             "Type": "String",
-            "Description": "CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/22)",
+            "Description": "CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/24)",
             "MinLength": 9,
             "MaxLength": 18,
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22",
-            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/22"
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
+            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/24"
         },
         "AppPublicCIDR2": {
             "Type": "String",
-            "Description": "CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/22)",
+            "Description": "CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/24)",
             "MinLength": 9,
             "MaxLength": 18,
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22",
-            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/22"
-        },
-        "AppPrivateCIDR1": {
-            "Type": "String",
-            "Description": "CIDR to use for Private Subnet 1 for App Environment (x.x.x.x/22)",
-            "MinLength": 9,
-            "MaxLength": 18,
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22",
-            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/22"
-        },
-        "AppPrivateCIDR2": {
-            "Type": "String",
-            "Description": "CIDR to use for Private Subnet 2 for App Environment (x.x.x.x/22)",
-            "MinLength": 9,
-            "MaxLength": 18,
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/22",
-            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/22"
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
+            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/24"
         }
     },
     "Mappings": {
@@ -128,7 +104,7 @@
         }
     },
     "Resources": {
-        "SubnetPublic1": {
+        "PublicSubnet1": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "AvailabilityZone": {
@@ -148,27 +124,7 @@
                 }
             }
         },
-        "SubnetPrivate1": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": {
-                    "Fn::Select": [
-                        0,
-                        {
-                            "Fn::GetAZs": ""
-                        }
-                    ]
-                },
-                "CidrBlock": {
-                    "Ref": "AppPrivateCIDR1"
-                },
-                "MapPublicIpOnLaunch": false,
-                "VpcId": {
-                    "Ref": "VPCId"
-                }
-            }
-        },
-        "SubnetPublic2": {
+        "PublicSubnet2": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "AvailabilityZone": {
@@ -188,26 +144,6 @@
                 }
             }
         },
-        "SubnetPrivate2": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": {
-                    "Fn::Select": [
-                        1,
-                        {
-                            "Fn::GetAZs": ""
-                        }
-                    ]
-                },
-                "CidrBlock": {
-                    "Ref": "AppPrivateCIDR2"
-                },
-                "MapPublicIpOnLaunch": false,
-                "VpcId": {
-                    "Ref": "VPCId"
-                }
-            }
-        },
         "SubnetRouteTableAssociatePublic1": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
@@ -215,7 +151,7 @@
                     "Ref": "PublicRouteTable"
                 },
                 "SubnetId": {
-                    "Ref": "SubnetPublic1"
+                    "Ref": "PublicSubnet1"
                 }
             }
         },
@@ -226,29 +162,7 @@
                     "Ref": "PublicRouteTable"
                 },
                 "SubnetId": {
-                    "Ref": "SubnetPublic2"
-                }
-            }
-        },
-        "SubnetRouteTableAssociatePrivate1": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "PrivateRouteTable1"
-                },
-                "SubnetId": {
-                    "Ref": "SubnetPrivate1"
-                }
-            }
-        },
-        "SubnetRouteTableAssociatePrivate2": {
-            "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "PrivateRouteTable2"
-                },
-                "SubnetId": {
-                    "Ref": "SubnetPrivate2"
+                    "Ref": "PublicSubnet2"
                 }
             }
         },
@@ -271,10 +185,10 @@
                 ],
                 "Subnets": [
                     {
-                        "Ref": "SubnetPublic1"
+                        "Ref": "PublicSubnet1"
                     },
                     {
-                        "Ref": "SubnetPublic2"
+                        "Ref": "PublicSubnet2"
                     }
                 ],
                 "SecurityGroups": [
@@ -369,7 +283,7 @@
                     }
                 ],
                 "SubnetId": {
-                    "Ref": "SubnetPublic1"
+                    "Ref": "PublicSubnet1"
                 },
                 "UserData": {
                     "Fn::Base64": {
