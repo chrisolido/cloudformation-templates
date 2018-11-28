@@ -116,6 +116,10 @@ Outputs:
   PublicRouteTable:
     Description: ID of Public Route Table
     Value: !Ref PublicRouteTable
+    Export:
+      Name: shared-vpc-public-rt
   VPCSharedBucketURL:
     Description: Shared Infrastructure App Bucket
     Value: !GetAtt VPCSharedBucket.WebsiteURL
+    Export:
+      Name: shared-vpc-bucket

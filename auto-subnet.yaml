@@ -61,7 +61,7 @@ Resources:
     Properties:
       Role: !GetAtt IAMRole.Arn
       Code:
-        S3Bucket: !ImportValue sharedinf-lambdabucketname
+        S3Bucket: !ImportValue shared-vpc-bucket
         S3Key: auto-subnet.zip
       Handler: auto-subnet.handler
       Runtime: "python2.7"
@@ -73,12 +73,12 @@ Resources:
           ReservedCIDR2: !ImportValue shared-vpc-reserved-cidr2
 Outputs:
   autosubnetlambdaarn:
-    Description: ARN of AutoSubnet Lambda
+    Description: ARN of Auto Subnet Lambda
     Value: !GetAtt subnetpicker.Arn
     Export:
-      Name: sharedinf-autosubnetarn
+      Name: auto-subnet-lambda-arn
   autosubnettablename:
-    Description: Table Name of AutoSubnet DDB Table
+    Description: Table Name of Auto Subnet DynamoDB Table
     Value: !Ref AutoSubnetTable
     Export:
-      Name: sharedinf-autosubnetddbtablename
+      Name: auto-subnet-dynamodb-table

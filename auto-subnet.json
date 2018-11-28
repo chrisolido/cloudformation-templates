@@ -115,7 +115,7 @@
                 },
                 "Code": {
                     "S3Bucket": {
-                        "Fn::ImportValue": "sharedinf-lambdabucketname"
+                        "Fn::ImportValue": "shared-vpc-bucket"
                     },
                     "S3Key": "auto-subnet.zip"
                 },
@@ -138,7 +138,7 @@
     },
     "Outputs": {
         "autosubnetlambdaarn": {
-            "Description": "ARN of AutoSubnet Lambda",
+            "Description": "ARN of Auto Subnet Lambda",
             "Value": {
                 "Fn::GetAtt": [
                     "subnetpicker",
@@ -146,16 +146,16 @@
                 ]
             },
             "Export": {
-                "Name": "sharedinf-autosubnetarn"
+                "Name": "auto-subnet-lambda-arn"
             }
         },
         "autosubnettablename": {
-            "Description": "Table Name of AutoSubnet DDB Table",
+            "Description": "Table Name of Auto Subnet DynamoDB Table",
             "Value": {
                 "Ref": "AutoSubnetTable"
             },
             "Export": {
-                "Name": "sharedinf-autosubnetddbtablename"
+                "Name": "auto-subnet-dynamodb-table"
             }
         }
     }

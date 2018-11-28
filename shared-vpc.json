@@ -223,6 +223,9 @@
             "Description": "ID of Public Route Table",
             "Value": {
                 "Ref": "PublicRouteTable"
+            },
+            "Export": {
+                "Name": "shared-vpc-public-rt"
             }
         },
         "VPCSharedBucketURL": {
@@ -232,6 +235,9 @@
                     "VPCSharedBucket",
                     "WebsiteURL"
                 ]
+            },
+            "Export": {
+                "Name": "shared-vpc-bucket"
             }
         }
     }
