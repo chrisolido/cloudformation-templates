@@ -373,7 +373,7 @@
                 },
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y aws-cfn-bootstrap # good practice - always do this.\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}\nyum -y update\ncurl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}\ncurl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}\n"
                     }
                 }
             },
@@ -443,7 +443,7 @@
                                         {
                                             "Ref": "AppBucketURL"
                                         },
-                                        "/App",
+                                        "/App-",
                                         {
                                             "Ref": "AppVersion"
                                         },
@@ -461,7 +461,7 @@
                                             {
                                                 "Ref": "AppBucketURL"
                                             },
-                                            "/Test",
+                                            "/Test-",
                                             {
                                                 "Ref": "AppVersion"
                                             },

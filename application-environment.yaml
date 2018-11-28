@@ -196,9 +196,8 @@ Resources:
         "Fn::Base64":
           !Sub |
             #!/bin/bash
-            yum update -y aws-cfn-bootstrap # good practice - always do this.
+            yum update -y
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
-            yum -y update
             curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
     Metadata:
