@@ -37,8 +37,7 @@ Resources:
       Bucket: !Ref S3AppBucket
       PolicyDocument:
         Statement:
-          - Sid: "ABC123"
-            Action:
+          - Action:
               - "s3:GetObject"
             Effect: Allow
             Resource: !Join ["", ["arn:aws:s3:::", !Ref S3AppBucket, "/*"]]

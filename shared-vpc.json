@@ -52,7 +52,6 @@
                 "PolicyDocument": {
                     "Statement": [
                         {
-                            "Sid": "ABC123",
                             "Action": [
                                 "s3:GetObject"
                             ],
