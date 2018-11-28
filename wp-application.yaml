@@ -104,8 +104,7 @@ Resources:
       Instances:
         - !Ref EC2Instance
       Listeners:
-        -
-          InstancePort: "80"
+        - InstancePort: "80"
           InstanceProtocol: HTTP
           LoadBalancerPort: "80"
           Protocol: HTTP
