@@ -89,7 +89,7 @@
                 }
             }
         },
-        "SharedPublicSubnet": {
+        "PublicSubnet": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "AvailabilityZone": {
@@ -116,7 +116,7 @@
                     "Ref": "PublicRouteTable"
                 },
                 "SubnetId": {
-                    "Ref": "SharedPublicSubnet"
+                    "Ref": "PublicSubnet"
                 }
             }
         },

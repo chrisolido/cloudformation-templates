@@ -49,7 +49,7 @@ Resources:
     Properties:
       InternetGatewayId: !Ref IGW
       VpcId: !Ref VPC
-  SharedPublicSubnet:
+  PublicSubnet:
     Type: "AWS::EC2::Subnet"
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
@@ -60,7 +60,7 @@ Resources:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref SharedPublicSubnet
+      SubnetId: !Ref PublicSubnet
   PublicSubnetRoute:
     Type: "AWS::EC2::Route"
     DependsOn: GatewayAttach
