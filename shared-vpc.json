@@ -1,7 +1,7 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
-        "VPCCIDR": {
+        "VpcCidr": {
             "Type": "String",
             "Description": "CIDR to use for the Shared VPC (x.x.x.x/16)",
             "MinLength": 9,
@@ -10,7 +10,7 @@
             "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/16",
             "Default": "10.20.0.0/16"
         },
-        "SharedCIDR": {
+        "PublicSubnetCidr": {
             "Type": "String",
             "Description": "CIDR to use for Public Subnet of Shared Environment (x.x.x.x/24)",
             "MinLength": 9,
@@ -25,7 +25,7 @@
             "Type": "AWS::EC2::VPC",
             "Properties": {
                 "CidrBlock": {
-                    "Ref": "VPCCIDR"
+                    "Ref": "VpcCidr"
                 }
             }
         },
@@ -102,7 +102,7 @@
                     ]
                 },
                 "CidrBlock": {
-                    "Ref": "SharedCIDR"
+                    "Ref": "PublicSubnetCidr"
                 },
                 "MapPublicIpOnLaunch": true,
                 "VpcId": {
