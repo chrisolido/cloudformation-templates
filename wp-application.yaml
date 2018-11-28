@@ -158,9 +158,9 @@ Resources:
           !Sub |
             #!/bin/bash
             yum update -y
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}
             curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
@@ -175,7 +175,7 @@ Resources:
                 [cfn-auto-reloader-hook]
                 triggers=post.update
                 path=Resources.EC2.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets www --region ${AWS::Region}
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}
               mode: "000400"
               owner: root
               group: root
