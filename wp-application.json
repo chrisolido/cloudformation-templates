@@ -1,20 +1,8 @@
 {
     "Parameters": {
-        "VPCId": {
-            "Type": "AWS::EC2::VPC::Id",
-            "Description": "Shared VPC Id"
-        },
-        "PublicRouteTable": {
-            "Type": "String",
-            "Description": "Shared VPC Public Route Table"
-        },
         "AppVersion": {
             "Type": "String",
             "Description": "Application Version to Deploy"
-        },
-        "AppBucketURL": {
-            "Type": "String",
-            "Description": "Application Bucket Location"
         },
         "Environment": {
             "Type": "String",
@@ -120,7 +108,7 @@
                 },
                 "MapPublicIpOnLaunch": true,
                 "VpcId": {
-                    "Ref": "VPCId"
+                    "Fn::ImportValue": "shared-vpc-id"
                 }
             }
         },
@@ -140,7 +128,7 @@
                 },
                 "MapPublicIpOnLaunch": true,
                 "VpcId": {
-                    "Ref": "VPCId"
+                    "Fn::ImportValue": "shared-vpc-id"
                 }
             }
         },
@@ -148,7 +136,7 @@
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "PublicRouteTable"
+                    "Fn::ImportValue": "shared-vpc-public-rt"
                 },
                 "SubnetId": {
                     "Ref": "PublicSubnet1"
@@ -159,7 +147,7 @@
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "PublicRouteTable"
+                    "Fn::ImportValue": "shared-vpc-public-rt"
                 },
                 "SubnetId": {
                     "Ref": "PublicSubnet2"
@@ -221,7 +209,7 @@
                     ]
                 },
                 "VpcId": {
-                    "Ref": "VPCId"
+                    "Fn::ImportValue": "shared-vpc-id"
                 },
                 "SecurityGroupIngress": [
                     {
@@ -355,7 +343,7 @@
                                     "",
                                     [
                                         {
-                                            "Ref": "AppBucketURL"
+                                            "Fn::ImportValue": "shared-vpc-bucket"
                                         },
                                         "/App-",
                                         {
@@ -373,7 +361,7 @@
                                         "",
                                         [
                                             {
-                                                "Ref": "AppBucketURL"
+                                                "Fn::ImportValue": "shared-vpc-bucket"
                                             },
                                             "/Test-",
                                             {
