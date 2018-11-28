@@ -41,7 +41,7 @@
         "IGW": {
             "Type": "AWS::EC2::InternetGateway"
         },
-        "S3AppBucket": {
+        "SharedBucket": {
             "DeletionPolicy": "Retain",
             "Type": "AWS::S3::Bucket",
             "Properties": {
@@ -52,11 +52,11 @@
                 }
             }
         },
-        "S3AppBucketPolicy": {
+        "SharedBucketPolicy": {
             "Type": "AWS::S3::BucketPolicy",
             "Properties": {
                 "Bucket": {
-                    "Ref": "S3AppBucket"
+                    "Ref": "SharedBucket"
                 },
                 "PolicyDocument": {
                     "Statement": [
@@ -71,7 +71,7 @@
                                     [
                                         "arn:aws:s3:::",
                                         {
-                                            "Ref": "S3AppBucket"
+                                            "Ref": "SharedBucket"
                                         },
                                         "/*"
                                     ]
@@ -213,11 +213,11 @@
                 "Ref": "PublicRouteTable"
             }
         },
-        "AppBucketURL": {
+        "SharedBucketURL": {
             "Description": "Shared Infrastructure App Bucket",
             "Value": {
                 "Fn::GetAtt": [
-                    "S3AppBucket",
+                    "SharedBucket",
                     "WebsiteURL"
                 ]
             }

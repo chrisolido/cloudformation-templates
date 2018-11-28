@@ -31,7 +31,7 @@ Resources:
       CidrBlock: !Ref VpcCidr
   IGW:
     Type: "AWS::EC2::InternetGateway"
-  S3AppBucket:
+  SharedBucket:
     DeletionPolicy: Retain
     Type: "AWS::S3::Bucket"
     Properties:
@@ -39,16 +39,16 @@ Resources:
       WebsiteConfiguration:
         ErrorDocument: index.html
         IndexDocument: index.html
-  S3AppBucketPolicy:
+  SharedBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
-      Bucket: !Ref S3AppBucket
+      Bucket: !Ref SharedBucket
       PolicyDocument:
         Statement:
           - Action:
               - "s3:GetObject"
             Effect: Allow
-            Resource: !Join ["", ["arn:aws:s3:::", !Ref S3AppBucket, "/*"]]
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref SharedBucket, "/*"]]
             Principal:
               AWS:
                 - "*"
@@ -110,6 +110,6 @@ Outputs:
   PublicRouteTable:
     Description: ID of Public Route Table
     Value: !Ref PublicRouteTable
-  AppBucketURL:
+  SharedBucketURL:
     Description: Shared Infrastructure App Bucket
-    Value: !GetAtt S3AppBucket.WebsiteURL
+    Value: !GetAtt SharedBucket.WebsiteURL
