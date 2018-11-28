@@ -120,19 +120,16 @@ Resources:
       GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " v", !Ref AppVersion, " - ", !Ref Environment]]
       VpcId: !Ref VPCId
       SecurityGroupIngress:
-        -
-          CidrIp: 0.0.0.0/0
+        - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
           ToPort: 80
           FromPort: 80
-        -
-          CidrIp: 0.0.0.0/0
+        - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
           ToPort: 22
           FromPort: 22
       SecurityGroupEgress:
-        -
-          CidrIp: 0.0.0.0/0
+        - CidrIp: 0.0.0.0/0
           ToPort: -1
           IpProtocol: "-1"
   EC2Instance: # for now this is in a public subnet, needs to be changed.
