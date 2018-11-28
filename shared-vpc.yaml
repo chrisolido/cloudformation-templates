@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-  VpcCidr:
+  VPCCidr:
     Type: String
     Description: CIDR to use for the Shared VPC (x.x.x.x/16)
     MinLength: 9
@@ -28,10 +28,10 @@ Resources:
   VPC:
     Type: "AWS::EC2::VPC"
     Properties:
-      CidrBlock: !Ref VpcCidr
+      CidrBlock: !Ref VPCCidr
   IGW:
     Type: "AWS::EC2::InternetGateway"
-  SharedBucket:
+  VPCSharedBucket:
     DeletionPolicy: Retain
     Type: "AWS::S3::Bucket"
     Properties:
@@ -39,16 +39,16 @@ Resources:
       WebsiteConfiguration:
         ErrorDocument: index.html
         IndexDocument: index.html
-  SharedBucketPolicy:
+  VPCSharedBucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
-      Bucket: !Ref SharedBucket
+      Bucket: !Ref VPCSharedBucket
       PolicyDocument:
         Statement:
           - Action:
               - "s3:GetObject"
             Effect: Allow
-            Resource: !Join ["", ["arn:aws:s3:::", !Ref SharedBucket, "/*"]]
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref VPCSharedBucket, "/*"]]
             Principal:
               AWS:
                 - "*"
@@ -92,24 +92,30 @@ Resources:
     Type: "AWS::EC2::RouteTable"
     Properties:
       VpcId: !Ref VPC
-
 Outputs:
-  VPCId:
+  VpcId:
     Description: ID of Shared Infrastructure VPC
     Value: !Ref VPC
+    Export:
+      Name: shared-vpc-id
+  VPCCidr:
+    Description: IP Range of Shared Infrastructure VPC
+    Value: !Ref VPCCidr
+    Export: # added to export
+      Name: shared-vpc-cidr
   ReservedRange1:
     Description: CIDR Range of Shared Public Subnet
     Value: !Ref PublicSubnetCidr1
-    Export: # added to export
+    Export:
       Name: shared-vpc-reserved-cidr1
   ReservedRange2:
     Description: CIDR Range of Shared Public Subnet
     Value: !Ref PublicSubnetCidr2
-    Export: # added to export
+    Export:
       Name: shared-vpc-reserved-cidr2
   PublicRouteTable:
     Description: ID of Public Route Table
     Value: !Ref PublicRouteTable
-  SharedBucketURL:
+  VPCSharedBucketURL:
     Description: Shared Infrastructure App Bucket
-    Value: !GetAtt SharedBucket.WebsiteURL
+    Value: !GetAtt VPCSharedBucket.WebsiteURL

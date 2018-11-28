@@ -1,7 +1,7 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Parameters": {
-        "VpcCidr": {
+        "VPCCidr": {
             "Type": "String",
             "Description": "CIDR to use for the Shared VPC (x.x.x.x/16)",
             "MinLength": 9,
@@ -34,14 +34,14 @@
             "Type": "AWS::EC2::VPC",
             "Properties": {
                 "CidrBlock": {
-                    "Ref": "VpcCidr"
+                    "Ref": "VPCCidr"
                 }
             }
         },
         "IGW": {
             "Type": "AWS::EC2::InternetGateway"
         },
-        "SharedBucket": {
+        "VPCSharedBucket": {
             "DeletionPolicy": "Retain",
             "Type": "AWS::S3::Bucket",
             "Properties": {
@@ -52,11 +52,11 @@
                 }
             }
         },
-        "SharedBucketPolicy": {
+        "VPCSharedBucketPolicy": {
             "Type": "AWS::S3::BucketPolicy",
             "Properties": {
                 "Bucket": {
-                    "Ref": "SharedBucket"
+                    "Ref": "VPCSharedBucket"
                 },
                 "PolicyDocument": {
                     "Statement": [
@@ -71,7 +71,7 @@
                                     [
                                         "arn:aws:s3:::",
                                         {
-                                            "Ref": "SharedBucket"
+                                            "Ref": "VPCSharedBucket"
                                         },
                                         "/*"
                                     ]
@@ -183,10 +183,22 @@
         }
     },
     "Outputs": {
-        "VPCId": {
+        "VpcId": {
             "Description": "ID of Shared Infrastructure VPC",
             "Value": {
                 "Ref": "VPC"
+            },
+            "Export": {
+                "Name": "shared-vpc-id"
+            }
+        },
+        "VPCCidr": {
+            "Description": "IP Range of Shared Infrastructure VPC",
+            "Value": {
+                "Ref": "VPCCidr"
+            },
+            "Export": {
+                "Name": "shared-vpc-cidr"
             }
         },
         "ReservedRange1": {
@@ -213,11 +225,11 @@
                 "Ref": "PublicRouteTable"
             }
         },
-        "SharedBucketURL": {
+        "VPCSharedBucketURL": {
             "Description": "Shared Infrastructure App Bucket",
             "Value": {
                 "Fn::GetAtt": [
-                    "SharedBucket",
+                    "VPCSharedBucket",
                     "WebsiteURL"
                 ]
             }
