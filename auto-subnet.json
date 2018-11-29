@@ -135,11 +135,18 @@
                         "DYNAMO_REGION": {
                             "Ref": "AWS::Region"
                         },
-                        "RESERVED_CIDR1": {
-                            "Fn::ImportValue": "shared-vpc-reserved-cidr1"
-                        },
-                        "RESERVED_CIDR2": {
-                            "Fn::ImportValue": "shared-vpc-reserved-cidr2"
+                        "RESERVED_CIDRS": {
+                            "Fn::Sub": [
+                                "[${CIDR1}, ${CIDR2}]",
+                                {
+                                    "CIDR1": {
+                                        "Fn::ImportValue": "shared-vpc-reserved-cidr1"
+                                    },
+                                    "CIDR2": {
+                                        "Fn::ImportValue": "shared-vpc-reserved-cidr2"
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
