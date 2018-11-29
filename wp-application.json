@@ -1,5 +1,31 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "App Environment Configuration"
+                    },
+                    "Parameters": [
+                        "AppVersion",
+                        "EnvironmentSize",
+                        "KeyPair",
+                        "SSHLocation"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "App Environment Networking"
+                    },
+                    "Parameters": [
+                        "AppPublicCIDR1",
+                        "AppPublicCIDR2"
+                    ]
+                }
+            ]
+        }
+    },
     "Parameters": {
         "AppVersion": {
             "Type": "String",
