@@ -16,15 +16,13 @@ def sendresponse(event, context, responsestatus, responsedata, reason):
         'Reason' : reason,
         'RequestId': event['RequestId'],
         'LogicalResourceId': event['LogicalResourceId'],
-        'PhysicalResourceId': event['LogicalResourceId'] + \
-            ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) \
-            for _ in range(10)),
+        'PhysicalResourceId': event['LogicalResourceId'] + str(uuid4()),
         'Data': responsedata
     }
     if debug == "True":
-        print "Sending %s to %s" % (json.dumps(payload), event['ResponseURL'])
+        print("Sending {0} to {1}".format(json.dumps(payload), event['ResponseURL']))
     requests.put(event['ResponseURL'], data=json.dumps(payload))
-    print "Sent %s to %s" % (json.dumps(payload), event['ResponseURL'])
+    print("Sent %s to %s".format(json.dumps(payload), event['ResponseURL']))
 
 
 
