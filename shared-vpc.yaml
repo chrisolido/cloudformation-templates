@@ -122,9 +122,9 @@ Outputs:
     Description: Shared Infrastructure App Bucket
     Value: !Ref SharedBucket
     Export:
-      Name: shared-vpc-bucket
+      Name: shared-bucket
   SharedBucketURL:
     Description: Shared Infrastructure App Bucket
     Value: !GetAtt SharedBucket.WebsiteURL
     Export:
-      Name: shared-vpc-bucket-url
+      Name: shared-bucket-url
