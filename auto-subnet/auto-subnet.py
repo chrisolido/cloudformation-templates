@@ -154,6 +154,7 @@ def cidr_is_in_table(cidr):
 def cidr_is_reserved(cidr):
     """ Check if CIDR is already reserved"""
     cidr = str(cidr)
+    # prehaps implement
     reserved1 = os.getenv('RESERVED_CIDR1', None)
     reserved2 = os.getenv('RESERVED_CIDR2', None)
 

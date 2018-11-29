@@ -73,6 +73,7 @@ Resources:
           VPC_CIDR: !ImportValue shared-vpc-cidr
           DYNAMO_TABLE_NAME: !Ref DynamoDBTable
           DYNAMO_REGION: !Ref AWS::Region
+          # could try to implment this using resources and json
           RESERVED_CIDR1: !ImportValue shared-vpc-reserved-cidr1
           RESERVED_CIDR2: !ImportValue shared-vpc-reserved-cidr2
 Outputs:
