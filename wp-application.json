@@ -20,7 +20,8 @@
                     },
                     "Parameters": [
                         "AppPublicCIDR1",
-                        "AppPublicCIDR2"
+                        "AppPublicCIDR2",
+                        "AppPrivateCIDR"
                     ]
                 }
             ]

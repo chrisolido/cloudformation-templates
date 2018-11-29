@@ -14,6 +14,7 @@ Metadata:
         Parameters:
           - AppPublicCIDR1
           - AppPublicCIDR2
+          - AppPrivateCIDR
 Parameters:
   AppVersion:
     Type: String
