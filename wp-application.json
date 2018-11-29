@@ -388,7 +388,7 @@
                                     "",
                                     [
                                         {
-                                            "Fn::ImportValue": "shared-vpc-bucket-url"
+                                            "Fn::ImportValue": "shared-bucket-url"
                                         },
                                         "/App-",
                                         {
@@ -406,7 +406,7 @@
                                         "",
                                         [
                                             {
-                                                "Fn::ImportValue": "shared-vpc-bucket-url"
+                                                "Fn::ImportValue": "shared-bucket-url"
                                             },
                                             "/Test-",
                                             {

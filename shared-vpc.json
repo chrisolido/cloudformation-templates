@@ -234,7 +234,7 @@
                 "Ref": "SharedBucket"
             },
             "Export": {
-                "Name": "shared-vpc-bucket"
+                "Name": "shared-bucket"
             }
         },
         "SharedBucketURL": {
@@ -246,7 +246,7 @@
                 ]
             },
             "Export": {
-                "Name": "shared-vpc-bucket-url"
+                "Name": "shared-bucket-url"
             }
         }
     }

@@ -116,7 +116,7 @@
                 },
                 "Code": {
                     "S3Bucket": {
-                        "Fn::ImportValue": "shared-vpc-bucket"
+                        "Fn::ImportValue": "shared-bucket"
                     },
                     "S3Key": "auto-subnet.zip"
                 },
