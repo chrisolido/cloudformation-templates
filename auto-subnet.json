@@ -137,7 +137,7 @@
                         },
                         "RESERVED_CIDRS": {
                             "Fn::Sub": [
-                                "[${CIDR1}, ${CIDR2}]",
+                                "[\"${CIDR1}\", \"${CIDR2}\"]",
                                 {
                                     "CIDR1": {
                                         "Fn::ImportValue": "shared-vpc-reserved-cidr1"
