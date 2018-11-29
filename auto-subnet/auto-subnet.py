@@ -8,8 +8,8 @@ import json
 from uuid import uuid4
 
 import boto3
-
 from boto3.dynamodb.conditions import Key, Attr
+
 import requests
 from netaddr import IPNetwork
 
