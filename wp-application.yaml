@@ -4,12 +4,12 @@ Parameters:
     Description: Application Version to Deploy
   EnvironmentSize:
     Type: String
-    Default: SMALL
+    Default: DEV
     AllowedValues:
+      - DEV
       - SMALL
       - MEDIUM
       - LARGE
-      - XLARGE
     Description: Select Environment Size (S,M,L)
   KeyPair:
     Description: Amazon EC2 Key Pair for SSH Access
@@ -69,18 +69,18 @@ Mappings:
     sa-east-1:
       AMALINUX: ami-0112d42866980b373
   InstanceSize:
-    SMALL:
+    DEV:
       EC2: t2.micro
       DB: db.t2.micro
-    MEDIUM:
+    SMALL:
       EC2: t3.small
       DB: db.t2.small
-    LARGE:
+    MEDIUM:
       EC2: t3.medium
       DB: db.t2.medium
-    XLARGE:
+    LARGE:
       EC2: m5.large
-      DB: db.t2.large
+      DB: db.m5.large
 Resources:
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
