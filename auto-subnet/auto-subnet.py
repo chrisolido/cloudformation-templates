@@ -24,7 +24,7 @@ def handler(event, context):
     """Allocate 3 IP ranges from a VPC CIDR Block"""
     print(f"Function ARN: {context.invoked_function_arn}")
     print(f"Event: {json.dumps(event)}")
-    print(f"Context: {json.dumps(event)}")
+    print(f"Context: {json.dumps(context)}")
 
     stack_id = event['StackId']
     request_type = event['RequestType']
