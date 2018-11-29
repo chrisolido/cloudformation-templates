@@ -1,6 +1,6 @@
 {
     "Resources": {
-        "AutoSubnetTable": {
+        "DynamoDBTable": {
             "Type": "AWS::DynamoDB::Table",
             "Properties": {
                 "AttributeDefinitions": [
@@ -20,12 +20,12 @@
                     }
                 ],
                 "ProvisionedThroughput": {
-                    "ReadCapacityUnits": 5,
-                    "WriteCapacityUnits": 5
+                    "ReadCapacityUnits": 3,
+                    "WriteCapacityUnits": 3
                 },
                 "GlobalSecondaryIndexes": [
                     {
-                        "IndexName": "rangesforstack",
+                        "IndexName": "StackCidrRange",
                         "KeySchema": [
                             {
                                 "AttributeName": "StackId",
@@ -36,8 +36,8 @@
                             "ProjectionType": "ALL"
                         },
                         "ProvisionedThroughput": {
-                            "ReadCapacityUnits": 5,
-                            "WriteCapacityUnits": 5
+                            "ReadCapacityUnits": 3,
+                            "WriteCapacityUnits": 3
                         }
                     }
                 ]
@@ -68,7 +68,7 @@
         "IAMPolicy": {
             "Type": "AWS::IAM::Policy",
             "Properties": {
-                "PolicyName": "autosubnetrole",
+                "PolicyName": "auto-subnet-policy",
                 "Roles": [
                     {
                         "Ref": "IAMRole"
@@ -93,10 +93,10 @@
                             ],
                             "Resource": [
                                 {
-                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AutoSubnetTable}"
+                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
                                 },
                                 {
-                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AutoSubnetTable}/index/*"
+                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*"
                                 }
                             ]
                         }
@@ -104,7 +104,7 @@
                 }
             }
         },
-        "subnetpicker": {
+        "AutoSubnet": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
                 "Role": {
@@ -120,16 +120,25 @@
                     "S3Key": "auto-subnet.zip"
                 },
                 "Handler": "auto-subnet.handler",
-                "Runtime": "python2.7",
-                "Timeout": 1000,
+                "Runtime": "python3.6",
+                "Timeout": 3000,
                 "MemorySize": 128,
                 "Environment": {
                     "Variables": {
+                        "VPCCidr": {
+                            "Fn::ImportValue": "shared-vpc-cidr"
+                        },
                         "ReservedCIDR1": {
                             "Fn::ImportValue": "shared-vpc-reserved-cidr1"
                         },
                         "ReservedCIDR2": {
                             "Fn::ImportValue": "shared-vpc-reserved-cidr2"
+                        },
+                        "DynamoDBTableName": {
+                            "Ref": "DynamoDBTable"
+                        },
+                        "DynamoDBRegion": {
+                            "Ref": "AWS::Region"
                         }
                     }
                 }
@@ -137,11 +146,11 @@
         }
     },
     "Outputs": {
-        "autosubnetlambdaarn": {
-            "Description": "ARN of Auto Subnet Lambda",
+        "AutoSubnetLambdaARN": {
+            "Description": "ARN of auto-subnet Lambda",
             "Value": {
                 "Fn::GetAtt": [
-                    "subnetpicker",
+                    "AutoSubnet",
                     "Arn"
                 ]
             },
@@ -149,13 +158,10 @@
                 "Name": "auto-subnet-lambda-arn"
             }
         },
-        "autosubnettablename": {
-            "Description": "Table Name of Auto Subnet DynamoDB Table",
+        "AutoSubnetDynamoDBTable": {
+            "Description": "Table Name of auto-subnet DynamoDB Table",
             "Value": {
-                "Ref": "AutoSubnetTable"
-            },
-            "Export": {
-                "Name": "auto-subnet-dynamodb-table"
+                "Ref": "DynamoDBTable"
             }
         }
     }

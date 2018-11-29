@@ -1,5 +1,5 @@
 Resources:
-  AutoSubnetTable:
+  DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
@@ -11,18 +11,18 @@ Resources:
         - AttributeName: "Cidr"
           KeyType: "HASH"
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+        ReadCapacityUnits: 3
+        WriteCapacityUnits: 3
       GlobalSecondaryIndexes:
-        - IndexName: "rangesforstack"
+        - IndexName: "StackCidrRange"
           KeySchema:
             - AttributeName: "StackId"
               KeyType: "HASH"
           Projection:
             ProjectionType: ALL
           ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
   IAMRole:
     Type: AWS::IAM::Role
     Properties:
@@ -39,7 +39,7 @@ Resources:
   IAMPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: autosubnetrole
+      PolicyName: auto-subnet-policy
       Roles:
         - !Ref IAMRole
       PolicyDocument:
@@ -54,9 +54,9 @@ Resources:
             Action:
               - "dynamodb:*"
             Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AutoSubnetTable}
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${AutoSubnetTable}/index/*
-  subnetpicker:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*
+  AutoSubnet:
     Type: AWS::Lambda::Function
     Properties:
       Role: !GetAtt IAMRole.Arn
@@ -65,20 +65,21 @@ Resources:
         S3Key: auto-subnet.zip
       Handler: auto-subnet.handler
       Runtime: python3.6
-      Timeout: 1000
+      Timeout: 3000
       MemorySize: 128
       Environment:
         Variables:
+          VPCCidr: !ImportValue shared-vpc-cidr
           ReservedCIDR1: !ImportValue shared-vpc-reserved-cidr1
           ReservedCIDR2: !ImportValue shared-vpc-reserved-cidr2
+          DynamoDBTableName: !Ref DynamoDBTable
+          DynamoDBRegion: !Ref AWS::Region
 Outputs:
-  autosubnetlambdaarn:
-    Description: ARN of Auto Subnet Lambda
-    Value: !GetAtt subnetpicker.Arn
+  AutoSubnetLambdaARN:
+    Description: ARN of auto-subnet Lambda
+    Value: !GetAtt AutoSubnet.Arn
     Export:
       Name: auto-subnet-lambda-arn
-  autosubnettablename:
-    Description: Table Name of Auto Subnet DynamoDB Table
-    Value: !Ref AutoSubnetTable
-    Export:
-      Name: auto-subnet-dynamodb-table
+  AutoSubnetDynamoDBTable:
+    Description: Table Name of auto-subnet DynamoDB Table
+    Value: !Ref DynamoDBTable
