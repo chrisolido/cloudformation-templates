@@ -122,7 +122,7 @@
                 },
                 "Handler": "auto-subnet.handler",
                 "Runtime": "python3.6",
-                "Timeout": 3000,
+                "Timeout": 300,
                 "MemorySize": 128,
                 "Environment": {
                     "Variables": {

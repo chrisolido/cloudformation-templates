@@ -66,14 +66,13 @@ Resources:
         S3Key: auto-subnet.zip
       Handler: auto-subnet.handler
       Runtime: python3.6
-      Timeout: 3000
+      Timeout: 300
       MemorySize: 128
       Environment:
         Variables:
           VPC_CIDR: !ImportValue shared-vpc-cidr
           DYNAMO_TABLE_NAME: !Ref DynamoDBTable
           DYNAMO_REGION: !Ref AWS::Region
-          # could try to implment this using resources and json
           RESERVED_CIDR1: !ImportValue shared-vpc-reserved-cidr1
           RESERVED_CIDR2: !ImportValue shared-vpc-reserved-cidr2
 Outputs:

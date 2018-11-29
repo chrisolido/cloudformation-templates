@@ -41,7 +41,7 @@
         "IGW": {
             "Type": "AWS::EC2::InternetGateway"
         },
-        "VPCSharedBucket": {
+        "SharedBucket": {
             "DeletionPolicy": "Retain",
             "Type": "AWS::S3::Bucket",
             "Properties": {
@@ -52,11 +52,11 @@
                 }
             }
         },
-        "VPCSharedBucketPolicy": {
+        "SharedBucketPolicy": {
             "Type": "AWS::S3::BucketPolicy",
             "Properties": {
                 "Bucket": {
-                    "Ref": "VPCSharedBucket"
+                    "Ref": "SharedBucket"
                 },
                 "PolicyDocument": {
                     "Statement": [
@@ -71,7 +71,7 @@
                                     [
                                         "arn:aws:s3:::",
                                         {
-                                            "Ref": "VPCSharedBucket"
+                                            "Ref": "SharedBucket"
                                         },
                                         "/*"
                                     ]
@@ -228,16 +228,25 @@
                 "Name": "shared-vpc-public-rt"
             }
         },
-        "VPCSharedBucketURL": {
+        "SharedBucketName": {
+            "Description": "Shared Infrastructure App Bucket",
+            "Value": {
+                "Ref": "SharedBucket"
+            },
+            "Export": {
+                "Name": "shared-vpc-bucket"
+            }
+        },
+        "SharedBucketURL": {
             "Description": "Shared Infrastructure App Bucket",
             "Value": {
                 "Fn::GetAtt": [
-                    "VPCSharedBucket",
+                    "SharedBucket",
                     "WebsiteURL"
                 ]
             },
             "Export": {
-                "Name": "shared-vpc-bucket"
+                "Name": "shared-vpc-bucket-url"
             }
         }
     }

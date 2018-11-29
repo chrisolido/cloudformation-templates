@@ -362,7 +362,7 @@
                                     "",
                                     [
                                         {
-                                            "Fn::ImportValue": "shared-vpc-bucket"
+                                            "Fn::ImportValue": "shared-vpc-bucket-url"
                                         },
                                         "/App-",
                                         {
@@ -380,7 +380,7 @@
                                         "",
                                         [
                                             {
-                                                "Fn::ImportValue": "shared-vpc-bucket"
+                                                "Fn::ImportValue": "shared-vpc-bucket-url"
                                             },
                                             "/Test-",
                                             {

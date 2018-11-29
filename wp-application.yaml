@@ -206,10 +206,10 @@ Resources:
                 ensureRunning: "true"
         config_app:
           sources:
-            /var/www/html: !Join ["", [!ImportValue shared-vpc-bucket, "/App-", !Ref AppVersion, ".zip"]]
+            /var/www/html: !Join ["", [!ImportValue shared-vpc-bucket-url, "/App-", !Ref AppVersion, ".zip"]]
           files:
             /var/www/html/test.pattern.zip:
-              source: !Join ["", [!ImportValue shared-vpc-bucket, "/Test-", !Ref AppVersion, ".zip"]]
+              source: !Join ["", [!ImportValue shared-vpc-bucket-url, "/Test-", !Ref AppVersion, ".zip"]]
               mode: "000644"
               owner: "root"
               group: "root"
