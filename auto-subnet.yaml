@@ -70,11 +70,11 @@ Resources:
       MemorySize: 128
       Environment:
         Variables:
-          VPCCidr: !ImportValue shared-vpc-cidr
-          ReservedCIDR1: !ImportValue shared-vpc-reserved-cidr1
-          ReservedCIDR2: !ImportValue shared-vpc-reserved-cidr2
-          DynamoDBTableName: !Ref DynamoDBTable
-          DynamoDBRegion: !Ref AWS::Region
+          VPC_CIDR: !ImportValue shared-vpc-cidr
+          DYNAMO_TABLE_NAME: !Ref DynamoDBTable
+          DYNAMO_REGION: !Ref AWS::Region
+          RESERVED_CIDR1: !ImportValue shared-vpc-reserved-cidr1
+          RESERVED_CIDR2: !ImportValue shared-vpc-reserved-cidr2
 Outputs:
   AutoSubnetLambdaARN:
     Description: ARN of auto-subnet Lambda

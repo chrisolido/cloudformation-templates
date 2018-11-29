@@ -126,20 +126,20 @@
                 "MemorySize": 128,
                 "Environment": {
                     "Variables": {
-                        "VPCCidr": {
+                        "VPC_CIDR": {
                             "Fn::ImportValue": "shared-vpc-cidr"
                         },
-                        "ReservedCIDR1": {
-                            "Fn::ImportValue": "shared-vpc-reserved-cidr1"
-                        },
-                        "ReservedCIDR2": {
-                            "Fn::ImportValue": "shared-vpc-reserved-cidr2"
-                        },
-                        "DynamoDBTableName": {
+                        "DYNAMO_TABLE_NAME": {
                             "Ref": "DynamoDBTable"
                         },
-                        "DynamoDBRegion": {
+                        "DYNAMO_REGION": {
                             "Ref": "AWS::Region"
+                        },
+                        "RESERVED_CIDR1": {
+                            "Fn::ImportValue": "shared-vpc-reserved-cidr1"
+                        },
+                        "RESERVED_CIDR2": {
+                            "Fn::ImportValue": "shared-vpc-reserved-cidr2"
                         }
                     }
                 }

@@ -13,9 +13,9 @@ from boto3.dynamodb.conditions import Key, Attr
 import requests
 from netaddr import IPNetwork
 
-table_name = os.getenv('DynamoDBTableName', None)
-region = os.getenv('DynamoDBRegion', '')
-vpc_cidr = os.getenv('VPCCidr', None)
+vpc_cidr = os.environ['VPC_CIDR']
+table_name = os.environ['DYNAMO_TABLE_NAME']
+region = os.environ['DYNAMO_REGION']
 
 dynamodb_table = boto3.resource('dynamodb', region_name=region).Table(table_name)
 
@@ -154,7 +154,7 @@ def cidr_is_in_table(cidr):
 def cidr_is_reserved(cidr):
     """ Check if CIDR is already reserved"""
     cidr = str(cidr)
-    reserved1 = os.getenv('ReservedCIDR1', None)
-    reserved2 = os.getenv('ReservedCIDR2', None)
+    reserved1 = os.getenv('RESERVED_CIDR1', None)
+    reserved2 = os.getenv('RESERVED_CIDR2', None)
 
     return cidr in reserved1, reserved2
