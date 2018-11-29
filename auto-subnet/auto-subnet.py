@@ -1,7 +1,10 @@
-import boto3, netaddr, random, string, requests, json, os
+import random, string, json
+from uuid import uuid4
 
-from netaddr import IPSet, IPNetwork
+import boto3
+import requests
 from boto3.dynamodb.conditions import Key, Attr
+from netaddr import IPSet, IPNetwork
 
 debug = ''
 

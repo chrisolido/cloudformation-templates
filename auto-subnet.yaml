@@ -64,7 +64,7 @@ Resources:
         S3Bucket: !ImportValue shared-vpc-bucket
         S3Key: auto-subnet.zip
       Handler: auto-subnet.handler
-      Runtime: "python2.7"
+      Runtime: python3.6
       Timeout: 1000
       MemorySize: 128
       Environment:
