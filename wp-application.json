@@ -70,6 +70,14 @@
             "MaxLength": 18,
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
             "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/24"
+        },
+        "AppPrivateCIDR": {
+            "Type": "String",
+            "Description": "CIDR to use for Private Subnet for App Environment (x.x.x.x/24)",
+            "MinLength": 9,
+            "MaxLength": 18,
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
+            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/24"
         }
     },
     "Mappings": {
@@ -175,6 +183,26 @@
                     "Ref": "AppPublicCIDR2"
                 },
                 "MapPublicIpOnLaunch": true,
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                }
+            }
+        },
+        "PrivateSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Ref": "AppPrivateCIDR"
+                },
+                "MapPublicIpOnLaunch": false,
                 "VpcId": {
                     "Fn::ImportValue": "shared-vpc-id"
                 }
