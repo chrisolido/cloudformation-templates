@@ -361,7 +361,7 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}\ncurl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets www --region ${AWS::Region}\ncurl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n"
                     }
                 }
             },
