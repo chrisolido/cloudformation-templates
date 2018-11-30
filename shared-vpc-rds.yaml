@@ -6,6 +6,8 @@ Metadata:
           default: "Networking Environment Configuration"
         Parameters:
           - VPCCidr
+          - PrivateSubnetCidr1
+          - PrivateSubnetCidr2
           - PublicSubnetCidr1
           - PublicSubnetCidr2
       - Label:
@@ -25,6 +27,22 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/16"
     ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/16
     Default: 10.20.0.0/16
+  PrivateSubnetCidr1:
+    Type: String
+    Description: CIDR to use for Private Subnet 1 of Shared Environment (x.x.x.x/24)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
+    Default: 10.20.0.0/24
+  PrivateSubnetCidr2:
+    Type: String
+    Description: CIDR to use for Private Subnet 2 of Shared Environment (x.x.x.x/24)
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
+    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
+    Default: 10.20.1.0/24
   PublicSubnetCidr1:
     Type: String
     Description: CIDR to use for Public Subnet 1 of Shared Environment (x.x.x.x/24)
@@ -32,7 +50,7 @@ Parameters:
     MaxLength: 18
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
     ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
-    Default: 10.20.1.0/24
+    Default: 10.20.2.0/24
   PublicSubnetCidr2:
     Type: String
     Description: CIDR to use for Public Subnet 2 of Shared Environment (x.x.x.x/24)
@@ -40,7 +58,7 @@ Parameters:
     MaxLength: 18
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
     ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
-    Default: 10.20.2.0/24
+    Default: 10.20.3.0/24
   DatabaseName:
     Type: String
     Default: wordpress
@@ -75,6 +93,8 @@ Parameters:
 Conditions:
   isRestore:
     !Not [!Equals [!Ref SnapshotToRestore, ""]]
+  isProduction:
+    !Not [!Equals [!Ref DatabaseSize, DEV]]
 Mappings:
   RDSInstanceSize:
     DEV:
@@ -100,6 +120,34 @@ Resources:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
       InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
+  PrivateSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !Ref PrivateSubnetCidr1
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  PrivateSubnetRouteTableAssociation1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+  PrivateSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !Ref PrivateSubnetCidr2
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC
+  PrivateSubnetRouteTableAssociation2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet2
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
       VpcId: !Ref VPC
   PublicSubnet1:
     Type: "AWS::EC2::Subnet"
@@ -143,13 +191,21 @@ Resources:
       AllocatedStorage: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, Size]
       StorageType: gp2
       Engine: MariaDB
-      DBSubnetGroupName: !Ref VPC
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      MultiAZ: !If [isProduction, true, false]
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
       MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
       DBSnapshotIdentifier: !If [isRestore, !Ref SnapshotToRestore, !Ref "AWS::NoValue"]
       DBInstanceClass: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, DB]
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup
+  RDSSubnetGroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: RDS Subnet Group
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
   RDSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -237,6 +293,16 @@ Outputs:
     Value: !Ref PublicSubnetCidr2
     Export:
       Name: shared-vpc-reserved-cidr2
+  ReservedRange3:
+    Description: CIDR Range of Shared Private Subnet 1
+    Value: !Ref PrivateSubnetCidr1
+    Export:
+      Name: shared-vpc-reserved-cidr3
+  ReservedRange4:
+    Description: CIDR Range of Shared Private Subnet 2
+    Value: !Ref PrivateSubnetCidr2
+    Export:
+      Name: shared-vpc-reserved-cidr4
   PublicRouteTable:
     Description: ID of Public Route Table
     Value: !Ref PublicRouteTable
