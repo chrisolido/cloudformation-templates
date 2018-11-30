@@ -57,13 +57,13 @@ Resources:
             Resource:
               - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}
               - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*
-  Lambda:
+  AutoSubnetLambda:
     Type: AWS::Lambda::Function
     Properties:
       Role: !GetAtt IAMRole.Arn
       Code:
         S3Bucket: !ImportValue shared-bucket
-        S3Key: auto-subnet.zip
+        S3Key: custom-lambdas.zip
       Handler: auto-subnet.handler
       Runtime: python3.6
       Timeout: 300
@@ -81,7 +81,7 @@ Resources:
 Outputs:
   AutoSubnetLambdaARN:
     Description: ARN of auto-subnet Lambda
-    Value: !GetAtt Lambda.Arn
+    Value: !GetAtt AutoSubnetLambda.Arn
     Export:
       Name: auto-subnet-lambda-arn
   AutoSubnetDynamoDBTable:
