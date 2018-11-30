@@ -77,7 +77,6 @@ Resources:
             - '["${CIDR1}", "${CIDR2}", "${CIDR3}"]'
             - CIDR1: !ImportValue shared-vpc-reserved-cidr1
               CIDR2: !ImportValue shared-vpc-reserved-cidr2
-              CIDR3: !ImportValue shared-vpc-reserved-cidr3
 Outputs:
   AutoSubnetLambdaARN:
     Description: ARN of auto-subnet Lambda

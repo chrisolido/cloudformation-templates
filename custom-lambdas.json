@@ -1,0 +1,176 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources": {
+        "DynamoDBTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "Properties": {
+                "AttributeDefinitions": [
+                    {
+                        "AttributeName": "Cidr",
+                        "AttributeType": "S"
+                    },
+                    {
+                        "AttributeName": "StackId",
+                        "AttributeType": "S"
+                    }
+                ],
+                "KeySchema": [
+                    {
+                        "AttributeName": "Cidr",
+                        "KeyType": "HASH"
+                    }
+                ],
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 1,
+                    "WriteCapacityUnits": 1
+                },
+                "GlobalSecondaryIndexes": [
+                    {
+                        "IndexName": "StackCidrRange",
+                        "KeySchema": [
+                            {
+                                "AttributeName": "StackId",
+                                "KeyType": "HASH"
+                            }
+                        ],
+                        "Projection": {
+                            "ProjectionType": "ALL"
+                        },
+                        "ProvisionedThroughput": {
+                            "ReadCapacityUnits": 1,
+                            "WriteCapacityUnits": 1
+                        }
+                    }
+                ]
+            }
+        },
+        "IAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
+        },
+        "IAMPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "auto-subnet-policy",
+                "Roles": [
+                    {
+                        "Ref": "IAMRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:*"
+                            ],
+                            "Resource": [
+                                "arn:aws:logs:*:*:*"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "dynamodb:*"
+                            ],
+                            "Resource": [
+                                {
+                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}"
+                                },
+                                {
+                                    "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "AutoSubnetLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Role": {
+                    "Fn::GetAtt": [
+                        "IAMRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": {
+                        "Fn::ImportValue": "shared-bucket"
+                    },
+                    "S3Key": "custom-lambdas.zip"
+                },
+                "Handler": "auto-subnet.handler",
+                "Runtime": "python3.6",
+                "Timeout": 300,
+                "MemorySize": 128,
+                "Environment": {
+                    "Variables": {
+                        "VPC_CIDR": {
+                            "Fn::ImportValue": "shared-vpc-cidr"
+                        },
+                        "DYNAMO_TABLE_NAME": {
+                            "Ref": "DynamoDBTable"
+                        },
+                        "DYNAMO_REGION": {
+                            "Ref": "AWS::Region"
+                        },
+                        "RESERVED_CIDRS": {
+                            "Fn::Sub": [
+                                "[\"${CIDR1}\", \"${CIDR2}\", \"${CIDR3}\"]",
+                                {
+                                    "CIDR1": {
+                                        "Fn::ImportValue": "shared-vpc-reserved-cidr1"
+                                    },
+                                    "CIDR2": {
+                                        "Fn::ImportValue": "shared-vpc-reserved-cidr2"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "AutoSubnetLambdaARN": {
+            "Description": "ARN of auto-subnet Lambda",
+            "Value": {
+                "Fn::GetAtt": [
+                    "AutoSubnetLambda",
+                    "Arn"
+                ]
+            },
+            "Export": {
+                "Name": "auto-subnet-lambda-arn"
+            }
+        },
+        "AutoSubnetDynamoDBTable": {
+            "Description": "Table Name of auto-subnet DynamoDB Table",
+            "Value": {
+                "Ref": "DynamoDBTable"
+            }
+        }
+    }
+}

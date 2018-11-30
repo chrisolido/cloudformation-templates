@@ -187,6 +187,7 @@ Resources:
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+      IamInstanceProfile: !ImportValue shared-ec2-instance-profile
       KeyName: !Ref KeyPair
       SecurityGroups:
         - !Ref EC2SecurityGroup
@@ -196,7 +197,6 @@ Resources:
             #!/bin/bash
             yum update -y
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets www --region ${AWS::Region}
-            curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
     Metadata:
       AWS::CloudFormation::Init:
