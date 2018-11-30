@@ -11,7 +11,10 @@
                         "AppVersion",
                         "EnvironmentSize",
                         "KeyPair",
-                        "SSHLocation"
+                        "SSHLocation",
+                        "MinSize",
+                        "MaxSize",
+                        "DesiredCapacity"
                     ]
                 },
                 {
@@ -20,8 +23,7 @@
                     },
                     "Parameters": [
                         "AppPublicCIDR1",
-                        "AppPublicCIDR2",
-                        "AppPrivateCIDR"
+                        "AppPublicCIDR2"
                     ]
                 }
             ]
@@ -56,6 +58,21 @@
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
         },
+        "MinSize": {
+            "Type": "String",
+            "Description": "Minimum number of EC2 instances",
+            "Default": "1"
+        },
+        "MaxSize": {
+            "Type": "String",
+            "Description": "Minimum number of EC2 instances (Desired x 2)",
+            "Default": "2"
+        },
+        "DesiredCapacity": {
+            "Type": "String",
+            "Description": "Desired number of EC2 instances",
+            "Default": "1"
+        },
         "AppPublicCIDR1": {
             "Type": "String",
             "Description": "CIDR to use for Public Subnet 1 for App Environment (x.x.x.x/24)",
@@ -67,14 +84,6 @@
         "AppPublicCIDR2": {
             "Type": "String",
             "Description": "CIDR to use for Public Subnet 2 for App Environment (x.x.x.x/24)",
-            "MinLength": 9,
-            "MaxLength": 18,
-            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
-            "ConstraintDescription": "Must be a valid CIDR range in the form x.x.x.x/24"
-        },
-        "AppPrivateCIDR": {
-            "Type": "String",
-            "Description": "CIDR to use for Private Subnet for App Environment (x.x.x.x/24)",
             "MinLength": 9,
             "MaxLength": 18,
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24",
@@ -189,26 +198,6 @@
                 }
             }
         },
-        "PrivateSubnet": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "AvailabilityZone": {
-                    "Fn::Select": [
-                        0,
-                        {
-                            "Fn::GetAZs": ""
-                        }
-                    ]
-                },
-                "CidrBlock": {
-                    "Ref": "AppPrivateCIDR"
-                },
-                "MapPublicIpOnLaunch": false,
-                "VpcId": {
-                    "Fn::ImportValue": "shared-vpc-id"
-                }
-            }
-        },
         "SubnetRouteTableAssociatePublic1": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
@@ -231,21 +220,12 @@
                 }
             }
         },
-        "ElasticLoadBalancer": {
-            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+        "ApplicationLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
-                "CrossZone": true,
-                "Instances": [
+                "SecurityGroups": [
                     {
-                        "Ref": "EC2Instance"
-                    }
-                ],
-                "Listeners": [
-                    {
-                        "InstancePort": "80",
-                        "InstanceProtocol": "HTTP",
-                        "LoadBalancerPort": "80",
-                        "Protocol": "HTTP"
+                        "Ref": "ALBSecurityGroup"
                     }
                 ],
                 "Subnets": [
@@ -255,60 +235,98 @@
                     {
                         "Ref": "PublicSubnet2"
                     }
-                ],
-                "SecurityGroups": [
-                    {
-                        "Ref": "SecurityGroup"
-                    }
                 ]
             }
         },
-        "SecurityGroup": {
-            "Type": "AWS::EC2::SecurityGroup",
+        "LoadBalancerListener": {
+            "Type": "AWS::ElasticLoadBalancingV2::Listener",
             "Properties": {
-                "GroupDescription": {
-                    "Fn::Join": [
-                        "",
-                        [
-                            "Stack ",
-                            {
-                                "Ref": "AWS::StackId"
-                            },
-                            " v",
-                            {
-                                "Ref": "AppVersion"
-                            },
-                            " - ",
-                            {
-                                "Ref": "EnvironmentSize"
-                            }
-                        ]
-                    ]
+                "LoadBalancerArn": {
+                    "Ref": "ApplicationLoadBalancer"
                 },
-                "VpcId": {
-                    "Fn::ImportValue": "shared-vpc-id"
-                },
-                "SecurityGroupIngress": [
+                "Port": 80,
+                "Protocol": "HTTP",
+                "DefaultActions": [
                     {
-                        "IpProtocol": "tcp",
-                        "ToPort": 80,
-                        "FromPort": 80,
-                        "CidrIp": "0.0.0.0/0"
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "ToPort": 22,
-                        "FromPort": 22,
-                        "CidrIp": {
-                            "Ref": "SSHLocation"
+                        "Type": "forward",
+                        "TargetGroupArn": {
+                            "Ref": "TargetGroup"
                         }
                     }
                 ]
             }
         },
-        "EC2Instance": {
-            "Type": "AWS::EC2::Instance",
-            "DeletionPolicy": "Delete",
+        "TargetGroup": {
+            "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties": {
+                "Port": 80,
+                "Protocol": "HTTP",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                }
+            }
+        },
+        "AutoScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Count": {
+                        "Ref": "DesiredCapacity"
+                    },
+                    "Timeout": "PT5M"
+                }
+            },
+            "Properties": {
+                "Cooldown": "300",
+                "HealthCheckGracePeriod": 300,
+                "HealthCheckType": "ELB",
+                "AvailabilityZones": [
+                    {
+                        "Fn::Select": [
+                            0,
+                            {
+                                "Fn::GetAZs": ""
+                            }
+                        ]
+                    },
+                    {
+                        "Fn::Select": [
+                            1,
+                            {
+                                "Fn::GetAZs": ""
+                            }
+                        ]
+                    }
+                ],
+                "VPCZoneIdentifier": [
+                    {
+                        "Ref": "PublicSubnet1"
+                    },
+                    {
+                        "Ref": "PublicSubnet2"
+                    }
+                ],
+                "LaunchConfigurationName": {
+                    "Ref": "EC2LaunchConfiguration"
+                },
+                "MinSize": {
+                    "Ref": "MinSize"
+                },
+                "MaxSize": {
+                    "Ref": "MaxSize"
+                },
+                "DesiredCapacity": {
+                    "Ref": "DesiredCapacity"
+                },
+                "TargetGroupARNs": [
+                    {
+                        "Ref": "TargetGroup"
+                    }
+                ]
+            }
+        },
+        "EC2LaunchConfiguration": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Timeout": "PT5M"
@@ -336,17 +354,11 @@
                 "KeyName": {
                     "Ref": "KeyPair"
                 },
-                "SecurityGroupIds": [
+                "SecurityGroups": [
                     {
-                        "Fn::GetAtt": [
-                            "SecurityGroup",
-                            "GroupId"
-                        ]
+                        "Ref": "EC2SecurityGroup"
                     }
                 ],
-                "SubnetId": {
-                    "Ref": "PublicSubnet1"
-                },
                 "UserData": {
                     "Fn::Base64": {
                         "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}\ncurl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n"
@@ -459,13 +471,87 @@
                     }
                 }
             }
+        },
+        "ALBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "ALB Security Group",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "EC2SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "Stack ",
+                            {
+                                "Ref": "AWS::StackId"
+                            },
+                            " v",
+                            {
+                                "Ref": "AppVersion"
+                            },
+                            " - ",
+                            {
+                                "Ref": "EnvironmentSize"
+                            }
+                        ]
+                    ]
+                },
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "ToPort": 22,
+                        "FromPort": 22,
+                        "CidrIp": {
+                            "Ref": "SSHLocation"
+                        }
+                    }
+                ]
+            }
+        },
+        "EC2InboundRule": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "IpProtocol": "tcp",
+                "FromPort": 80,
+                "ToPort": 80,
+                "SourceSecurityGroupId": {
+                    "Fn::GetAtt": [
+                        "ALBSecurityGroup",
+                        "GroupId"
+                    ]
+                },
+                "GroupId": {
+                    "Fn::GetAtt": [
+                        "EC2SecurityGroup",
+                        "GroupId"
+                    ]
+                }
+            }
         }
     },
     "Outputs": {
         "Endpoint": {
             "Description": "Application URL",
             "Value": {
-                "Fn::Sub": "http://${ElasticLoadBalancer.DNSName}/app.php"
+                "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}/app.php"
             }
         }
     }
