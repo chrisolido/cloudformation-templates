@@ -12,8 +12,8 @@ Resources:
         - AttributeName: "Cidr"
           KeyType: "HASH"
       ProvisionedThroughput:
-        ReadCapacityUnits: 3
-        WriteCapacityUnits: 3
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       GlobalSecondaryIndexes:
         - IndexName: "StackCidrRange"
           KeySchema:
@@ -22,8 +22,8 @@ Resources:
           Projection:
             ProjectionType: ALL
           ProvisionedThroughput:
-            ReadCapacityUnits: 3
-            WriteCapacityUnits: 3
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   IAMRole:
     Type: AWS::IAM::Role
     Properties:
