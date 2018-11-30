@@ -74,9 +74,10 @@ Resources:
           DYNAMO_TABLE_NAME: !Ref DynamoDBTable
           DYNAMO_REGION: !Ref AWS::Region
           RESERVED_CIDRS: !Sub
-            - '["${CIDR1}", "${CIDR2}"]'
+            - '["${CIDR1}", "${CIDR2}", "${CIDR3}"]'
             - CIDR1: !ImportValue shared-vpc-reserved-cidr1
               CIDR2: !ImportValue shared-vpc-reserved-cidr2
+              CIDR3: !ImportValue shared-vpc-reserved-cidr3
 Outputs:
   AutoSubnetLambdaARN:
     Description: ARN of auto-subnet Lambda
