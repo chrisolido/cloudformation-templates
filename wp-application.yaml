@@ -114,26 +114,26 @@ Mappings:
       DB: db.m5.large
 Resources:
   PublicSubnet1:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: !Ref AppPublicCIDR1
       MapPublicIpOnLaunch: true
       VpcId: !ImportValue shared-vpc-id
   PublicSubnet2:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs ]
       CidrBlock: !Ref AppPublicCIDR2
       MapPublicIpOnLaunch: true
       VpcId: !ImportValue shared-vpc-id
   SubnetRouteTableAssociatePublic1:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !ImportValue shared-vpc-public-rt
       SubnetId: !Ref PublicSubnet1
   SubnetRouteTableAssociatePublic2:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !ImportValue shared-vpc-public-rt
       SubnetId: !Ref PublicSubnet2
