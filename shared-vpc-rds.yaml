@@ -34,10 +34,14 @@ Parameters:
       - LARGE
 Mappings:
   RDSInstanceSize:
-    DEV: db.t2.micro
-    SMALL: db.t2.medium
-    MEDIUM: db.m5.large
-    LARGE: db.m5.2xlarge
+    DEV:
+      DB: db.t2.micro
+    SMALL:
+      DB: db.t2.medium
+    MEDIUM:
+      DB: db.m5.large
+    LARGE:
+      DB: db.m5.2xlarge
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"

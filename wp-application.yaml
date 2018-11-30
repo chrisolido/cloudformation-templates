@@ -21,7 +21,7 @@ Parameters:
   AppVersion:
     Type: String
     Description: Application Version to Deploy
-  EC2InstanceSize:
+  EnvironmentSize:
     Type: String
     Default: DEV
     AllowedValues:
@@ -29,7 +29,7 @@ Parameters:
       - SMALL
       - MEDIUM
       - LARGE
-    Description: Select Environment Size (S,M,L)
+    Description: Select Environment Size
   KeyPair:
     Description: Amazon EC2 Key Pair for SSH Access
     Type: AWS::EC2::KeyPair::KeyName
@@ -99,11 +99,15 @@ Mappings:
       AMALINUX: ami-0b8dea0e70b969adc
     sa-east-1:
       AMALINUX: ami-0112d42866980b373
-  EC2InstanceSize:
-    DEV: t2.micro
-    SMALL: t3.small
-    MEDIUM: t3.medium
-    LARGE: m5.large
+  InstanceSize:
+    DEV:
+      EC2: t2.micro
+    SMALL:
+      EC2: t3.small
+    MEDIUM:
+      EC2: t3.medium
+    LARGE:
+      EC2: m5.large
 Resources:
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -182,7 +186,7 @@ Resources:
         Timeout: PT5M
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
-      InstanceType: !FindInMap [EC2InstanceSize, !Ref EC2InstanceSize]
+      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
       KeyName: !Ref KeyPair
       SecurityGroups:
         - !Ref EC2SecurityGroup

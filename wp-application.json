@@ -34,7 +34,7 @@
             "Type": "String",
             "Description": "Application Version to Deploy"
         },
-        "EC2InstanceSize": {
+        "EnvironmentSize": {
             "Type": "String",
             "Default": "DEV",
             "AllowedValues": [
@@ -43,7 +43,7 @@
                 "MEDIUM",
                 "LARGE"
             ],
-            "Description": "Select Environment Size (S,M,L)"
+            "Description": "Select Environment Size"
         },
         "KeyPair": {
             "Description": "Amazon EC2 Key Pair for SSH Access",
@@ -138,11 +138,19 @@
                 "AMALINUX": "ami-0112d42866980b373"
             }
         },
-        "EC2InstanceSize": {
-            "DEV": "t2.micro",
-            "SMALL": "t3.small",
-            "MEDIUM": "t3.medium",
-            "LARGE": "m5.large"
+        "InstanceSize": {
+            "DEV": {
+                "EC2": "t2.micro"
+            },
+            "SMALL": {
+                "EC2": "t3.small"
+            },
+            "MEDIUM": {
+                "EC2": "t3.medium"
+            },
+            "LARGE": {
+                "EC2": "m5.large"
+            }
         }
     },
     "Resources": {
@@ -332,10 +340,11 @@
                 },
                 "InstanceType": {
                     "Fn::FindInMap": [
-                        "EC2InstanceSize",
+                        "InstanceSize",
                         {
-                            "Ref": "EC2InstanceSize"
-                        }
+                            "Ref": "EnvironmentSize"
+                        },
+                        "EC2"
                     ]
                 },
                 "KeyName": {
