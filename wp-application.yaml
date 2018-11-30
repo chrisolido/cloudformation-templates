@@ -201,7 +201,7 @@ Resources:
             yum update -y
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}
             curl 127.0.0.1/app.php | grep -f /var/www/html/test.pattern
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
