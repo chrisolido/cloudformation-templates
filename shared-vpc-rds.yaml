@@ -24,6 +24,20 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
     ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
     Default: 10.20.1.0/24
+  RDSInstanceSize:
+    Type: String
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - SMALL
+      - MEDIUM
+      - LARGE
+Mappings:
+  RDSInstanceSize:
+    DEV: db.t2.micro
+    SMALL: db.t2.medium
+    MEDIUM: db.m5.large
+    LARGE: db.m5.2xlarge
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"

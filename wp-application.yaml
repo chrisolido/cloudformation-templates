@@ -21,7 +21,7 @@ Parameters:
   AppVersion:
     Type: String
     Description: Application Version to Deploy
-  EnvironmentSize:
+  EC2InstanceSize:
     Type: String
     Default: DEV
     AllowedValues:
@@ -99,19 +99,11 @@ Mappings:
       AMALINUX: ami-0b8dea0e70b969adc
     sa-east-1:
       AMALINUX: ami-0112d42866980b373
-  InstanceSize:
-    DEV:
-      EC2: t2.micro
-      DB: db.t2.micro
-    SMALL:
-      EC2: t3.small
-      DB: db.t2.small
-    MEDIUM:
-      EC2: t3.medium
-      DB: db.t2.medium
-    LARGE:
-      EC2: m5.large
-      DB: db.m5.large
+  EC2InstanceSize:
+    DEV: t2.micro
+    SMALL: t3.small
+    MEDIUM: t3.medium
+    LARGE: m5.large
 Resources:
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -190,7 +182,7 @@ Resources:
         Timeout: PT5M
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
-      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+      InstanceType: !FindInMap [EC2InstanceSize, !Ref EC2InstanceSize]
       KeyName: !Ref KeyPair
       SecurityGroups:
         - !Ref EC2SecurityGroup
