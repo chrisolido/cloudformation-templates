@@ -62,14 +62,14 @@ Mappings:
       DB: db.m5.2xlarge
       Size: "40"
 Resources:
-  SharedRDSInstance:
+  SharedMariaDB:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Snapshot
     Properties:
       AllocatedStorage: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, Size]
       StorageType: gp2
       Engine: MariaDB
-      DBSubnetGroupName: !Ref RDSSubnetGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
       DBName: !Ref DatabaseName
       MultiAZ: !If [isProduction, true, false]
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
@@ -77,28 +77,28 @@ Resources:
       DBSnapshotIdentifier: !If [isRestore, !Ref SnapshotToRestore, !Ref "AWS::NoValue"]
       DBInstanceClass: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, DB]
       VPCSecurityGroups:
-        - !Ref RDSSecurityGroup
-  RDSSubnetGroup:
+        - !Ref DBSecurityGroup
+  DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: RDS Subnet Group
       SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-  RDSSecurityGroup:
+        - !ImportValue shared-vpc-private-subnet1
+        - !ImportValue shared-vpc-private-subnet2
+  DBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: RDS Security Group
-      VpcId: !Ref VPC
+      VpcId: !ImportValue shared-vpc-id
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          CidrIp: !Ref VPCCidr
+          CidrIp: !ImportValue shared-vpc-cidr
 Outputs:
   DatabaseEndpoint:
     Description: RDS Database Endpoint
-    Value: !GetAtt SharedRDSInstance.Endpoint.Address
+    Value: !GetAtt SharedMariaDB.Endpoint.Address
     Export:
       Name: shared-rds-instance-endpoint
   DatabaseName:

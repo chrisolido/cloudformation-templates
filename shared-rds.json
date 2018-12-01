@@ -104,7 +104,7 @@
         }
     },
     "Resources": {
-        "SharedRDSInstance": {
+        "SharedMariaDB": {
             "Type": "AWS::RDS::DBInstance",
             "DeletionPolicy": "Snapshot",
             "Properties": {
@@ -120,7 +120,7 @@
                 "StorageType": "gp2",
                 "Engine": "MariaDB",
                 "DBSubnetGroupName": {
-                    "Ref": "RDSSubnetGroup"
+                    "Ref": "DBSubnetGroup"
                 },
                 "DBName": {
                     "Ref": "DatabaseName"
@@ -176,31 +176,31 @@
                 },
                 "VPCSecurityGroups": [
                     {
-                        "Ref": "RDSSecurityGroup"
+                        "Ref": "DBSecurityGroup"
                     }
                 ]
             }
         },
-        "RDSSubnetGroup": {
+        "DBSubnetGroup": {
             "Type": "AWS::RDS::DBSubnetGroup",
             "Properties": {
                 "DBSubnetGroupDescription": "RDS Subnet Group",
                 "SubnetIds": [
                     {
-                        "Ref": "PrivateSubnet1"
+                        "Fn::ImportValue": "shared-vpc-private-subnet1"
                     },
                     {
-                        "Ref": "PrivateSubnet2"
+                        "Fn::ImportValue": "shared-vpc-private-subnet2"
                     }
                 ]
             }
         },
-        "RDSSecurityGroup": {
+        "DBSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "RDS Security Group",
                 "VpcId": {
-                    "Ref": "VPC"
+                    "Fn::ImportValue": "shared-vpc-id"
                 },
                 "SecurityGroupIngress": [
                     {
@@ -208,7 +208,7 @@
                         "FromPort": 3306,
                         "ToPort": 3306,
                         "CidrIp": {
-                            "Ref": "VPCCidr"
+                            "Fn::ImportValue": "shared-vpc-cidr"
                         }
                     }
                 ]
@@ -220,7 +220,7 @@
             "Description": "RDS Database Endpoint",
             "Value": {
                 "Fn::GetAtt": [
-                    "SharedRDSInstance",
+                    "SharedMariaDB",
                     "Endpoint.Address"
                 ]
             },
