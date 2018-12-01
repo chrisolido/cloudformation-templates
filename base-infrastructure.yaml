@@ -43,22 +43,6 @@ Parameters:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
     ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
     Default: 10.20.1.0/24
-  PublicSubnetCidr1:
-    Type: String
-    Description: CIDR to use for Public Subnet 1 of Shared Environment (x.x.x.x/24)
-    MinLength: 9
-    MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
-    Default: 10.20.2.0/24
-  PublicSubnetCidr2:
-    Type: String
-    Description: CIDR to use for Public Subnet 2 of Shared Environment (x.x.x.x/24)
-    MinLength: 9
-    MaxLength: 18
-    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/24"
-    ConstraintDescription: Must be a valid CIDR range in the form x.x.x.x/24
-    Default: 10.20.3.0/24
   DatabaseName:
     Type: String
     Default: wordpress
@@ -73,7 +57,7 @@ Parameters:
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
   DatabasePassword:
     Type: String
-    Default: wordpress
+    Default: W0rdpr355
     MinLength: 8
     MaxLength: 41
     AllowedPattern: "[a-zA-Z0-9~!#$%^&]*"
@@ -149,30 +133,18 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  PublicSubnet1:
+  PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: !Ref PublicSubnetCidr1
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
-  PublicSubnetRouteTableAssociation1:
+  PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: !Select [1, !GetAZs ]
-      CidrBlock: !Ref PublicSubnetCidr2
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref VPC
-  PublicSubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref PublicSubnet2
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: GatewayAttach
@@ -217,28 +189,20 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           CidrIp: !Ref VPCCidr
-  SharedBucket:
-    DeletionPolicy: Retain
+  WPBackupBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Properties:
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        ErrorDocument: index.html
-        IndexDocument: index.html
-  SharedBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref SharedBucket
-      PolicyDocument:
-        Statement:
-          - Action:
-              - s3:GetObject
-            Effect: Allow
-            Resource: !Join ["", ["arn:aws:s3:::", !Ref SharedBucket, "/*"]]
-            Principal:
-              AWS:
-                - "*"
-  SharedBucketEC2Role:
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 60
+            NoncurrentVersionTransitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 30
+            Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+  WPInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -265,14 +229,14 @@ Resources:
                   - s3:PutObject
                   - s3:PutObjectAcl
                 Resource:
-                  - !Sub "${SharedBucket.Arn}"
-                  - !Sub "${SharedBucket.Arn}/*"
-  SharedEC2InstanceProfile:
+                  - !Sub "${WPBackupBucket.Arn}"
+                  - !Sub "${WPBackupBucket.Arn}/*"
+  WPInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
       Roles:
-        - !Ref SharedBucketEC2Role
+        - !Ref WPInstanceRole
 Outputs:
   VpcId:
     Description: ID of Shared Infrastructure VPC
@@ -285,25 +249,15 @@ Outputs:
     Export: # added to export
       Name: shared-vpc-cidr
   ReservedRange1:
-    Description: CIDR Range of Shared Public Subnet 1
-    Value: !Ref PublicSubnetCidr1
-    Export:
-      Name: shared-vpc-reserved-cidr1
-  ReservedRange2:
-    Description: CIDR Range of Shared Public Subnet 2
-    Value: !Ref PublicSubnetCidr2
-    Export:
-      Name: shared-vpc-reserved-cidr2
-  ReservedRange3:
     Description: CIDR Range of Shared Private Subnet 1
     Value: !Ref PrivateSubnetCidr1
     Export:
-      Name: shared-vpc-reserved-cidr3
-  ReservedRange4:
+      Name: shared-vpc-reserved-cidr1
+  ReservedRange2:
     Description: CIDR Range of Shared Private Subnet 2
     Value: !Ref PrivateSubnetCidr2
     Export:
-      Name: shared-vpc-reserved-cidr4
+      Name: shared-vpc-reserved-cidr2
   PublicRouteTable:
     Description: ID of Public Route Table
     Value: !Ref PublicRouteTable
@@ -329,18 +283,13 @@ Outputs:
     Value: !Ref DatabasePassword
     Export:
       Name: shared-rds-root-password
-  SharedBucketName:
-    Description: Shared Infrastructure App Bucket
-    Value: !Ref SharedBucket
+  WPBackupBucket:
+    Description: Backup S3 Bucket for Wordpress Instances
+    Value: !Ref WPBackupBucket
     Export:
-      Name: shared-bucket
-  SharedBucketURL:
-    Description: Shared Infrastructure App Bucket
-    Value: !GetAtt SharedBucket.WebsiteURL
+      Name: wp-backup-bucket
+  WPInstanceProfile:
+    Description: Wordpress EC2 Instance Profile
+    Value: !Ref WPInstanceProfile
     Export:
-      Name: shared-bucket-url
-  SharedEC2InstanceProfile:
-    Description: Shared EC2 Instance Profile
-    Value: !Ref SharedEC2InstanceProfile
-    Export:
-      Name: shared-ec2-instance-profile
+      Name: wp-instance-profile
