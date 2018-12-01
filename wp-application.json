@@ -571,7 +571,7 @@
         "Endpoint": {
             "Description": "Application URL",
             "Value": {
-                "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}/app.php"
+                "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}"
             }
         }
     }

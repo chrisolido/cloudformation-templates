@@ -354,6 +354,9 @@
                 "DBSubnetGroupName": {
                     "Ref": "RDSSubnetGroup"
                 },
+                "DBName": {
+                    "Ref": "DatabaseName"
+                },
                 "MultiAZ": {
                     "Fn::If": [
                         "isProduction",

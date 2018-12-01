@@ -325,4 +325,4 @@ Resources:
 Outputs:
   Endpoint:
     Description: Application URL
-    Value: !Sub "http://${ApplicationLoadBalancer.DNSName}/app.php"
+    Value: !Sub "http://${ApplicationLoadBalancer.DNSName}"

@@ -192,6 +192,7 @@ Resources:
       StorageType: gp2
       Engine: MariaDB
       DBSubnetGroupName: !Ref RDSSubnetGroup
+      DBName: !Ref DatabaseName
       MultiAZ: !If [isProduction, true, false]
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
       MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
