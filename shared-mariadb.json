@@ -229,46 +229,106 @@
                     }
                 ]
             }
+        },
+        "IAMRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
+        },
+        "IAMPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "auto-database-policy",
+                "Roles": [
+                    {
+                        "Ref": "IAMRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:*"
+                            ],
+                            "Resource": [
+                                "arn:aws:logs:*:*:*"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "AutoDatabaseLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Role": {
+                    "Fn::GetAtt": [
+                        "IAMRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": {
+                        "Ref": "S3Bucket"
+                    },
+                    "S3Key": "custom-resources.zip"
+                },
+                "Handler": "auto-database.handler",
+                "Runtime": "python3.6",
+                "Timeout": 300,
+                "MemorySize": 128,
+                "Environment": {
+                    "Variables": {
+                        "DB_ENDPOINT": {
+                            "Fn::GetAtt": [
+                                "SharedMariaDB",
+                                "Endpoint.Address"
+                            ]
+                        },
+                        "DB_NAME": {
+                            "Ref": "DatabaseName"
+                        },
+                        "DB_USER": {
+                            "Ref": "DatabaseUser"
+                        },
+                        "DB_PASSWORD": {
+                            "Ref": "DatabasePassword"
+                        }
+                    }
+                }
+            }
         }
     },
     "Outputs": {
-        "DatabaseEndpoint": {
-            "Description": "RDS Database Endpoint",
+        "AutoSubnetLambdaARN": {
+            "Description": "ARN of auto-database Lambda",
             "Value": {
                 "Fn::GetAtt": [
-                    "SharedMariaDB",
-                    "Endpoint.Address"
+                    "AutoDatabaseLambda",
+                    "Arn"
                 ]
             },
             "Export": {
-                "Name": "shared-rds-instance-endpoint"
-            }
-        },
-        "DatabaseName": {
-            "Description": "RDS Database Name",
-            "Value": {
-                "Ref": "DatabaseName"
-            },
-            "Export": {
-                "Name": "shared-rds-database-name"
-            }
-        },
-        "DatabaseUser": {
-            "Description": "Root User of RDS Instance",
-            "Value": {
-                "Ref": "DatabaseUser"
-            },
-            "Export": {
-                "Name": "shared-rds-root-user"
-            }
-        },
-        "DatabasePassword": {
-            "Description": "Root user password of RDS Instance",
-            "Value": {
-                "Ref": "DatabasePassword"
-            },
-            "Export": {
-                "Name": "shared-rds-root-password"
+                "Name": "auto-database-lambda-arn"
             }
         }
     }

@@ -89,7 +89,7 @@ Resources:
         S3Key: custom-resources.zip
       Handler: auto-subnet.handler
       Runtime: python3.6
-      Timeout: 300
+      Timeout: 120
       MemorySize: 128
       Environment:
         Variables:
