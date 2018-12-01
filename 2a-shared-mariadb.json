@@ -233,6 +233,7 @@
         "VpcEndpoint": {
             "Type": "AWS::EC2::VPCEndpoint",
             "Properties": {
+                "VpcEndpointType": "Gateway",
                 "PolicyDocument": {
                     "Statement": [
                         {
