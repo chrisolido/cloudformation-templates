@@ -132,6 +132,14 @@
                 }
             }
         },
+        "AutoDatabaseCustomResource": {
+            "Type": "Custom::LambdaAutoDatabase",
+            "Properties": {
+                "ServiceToken": {
+                    "Fn::ImportValue": "auto-database-lambda-arn"
+                }
+            }
+        },
         "PublicSubnet1": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
@@ -450,16 +458,28 @@
                                         "sed -i 's/localhost/${DBEndpoint}/g' wp-config.php\nsed -i 's/database_name_here/${DBName}/g' wp-config.php\nsed -i 's/username_here/${DBUser}/g' wp-config.php\nsed -i 's/password_here/${DBPassword}/g' wp-config.php\n",
                                         {
                                             "DBEndpoint": {
-                                                "Fn::ImportValue": "shared-rds-instance-endpoint"
+                                                "Fn::GetAtt": [
+                                                    "AutoDatabaseCustomResource",
+                                                    "DB_ENDPOINT"
+                                                ]
                                             },
                                             "DBName": {
-                                                "Fn::ImportValue": "shared-rds-database-name"
+                                                "Fn::GetAtt": [
+                                                    "AutoDatabaseCustomResource",
+                                                    "DB_NAME"
+                                                ]
                                             },
                                             "DBUser": {
-                                                "Fn::ImportValue": "shared-rds-root-user"
+                                                "Fn::GetAtt": [
+                                                    "AutoDatabaseCustomResource",
+                                                    "DB_USER"
+                                                ]
                                             },
                                             "DBPassword": {
-                                                "Fn::ImportValue": "shared-rds-root-password"
+                                                "Fn::GetAtt": [
+                                                    "AutoDatabaseCustomResource",
+                                                    "DB_PASSWORD"
+                                                ]
                                             }
                                         }
                                     ]

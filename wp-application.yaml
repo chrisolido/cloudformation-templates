@@ -91,6 +91,10 @@ Resources:
     Type: Custom::LambdaAutoSubnet
     Properties:
       ServiceToken: !ImportValue auto-subnet-lambda-arn
+  AutoDatabaseCustomResource:
+    Type: Custom::LambdaAutoDatabase
+    Properties:
+      ServiceToken: !ImportValue auto-database-lambda-arn
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -267,10 +271,10 @@ Resources:
                   sed -i 's/username_here/${DBUser}/g' wp-config.php
                   sed -i 's/password_here/${DBPassword}/g' wp-config.php
                 -
-                  DBEndpoint: !ImportValue shared-rds-instance-endpoint
-                  DBName: !ImportValue shared-rds-database-name
-                  DBUser: !ImportValue shared-rds-root-user
-                  DBPassword: !ImportValue shared-rds-root-password
+                  DBEndpoint: !GetAtt AutoDatabaseCustomResource.DB_ENDPOINT
+                  DBName: !GetAtt AutoDatabaseCustomResource.DB_NAME
+                  DBUser: !GetAtt AutoDatabaseCustomResource.DB_USER
+                  DBPassword: !GetAtt AutoDatabaseCustomResource.DB_PASSWORD
             05_setup_cron:
               cwd: /etc
               test: test -e /var/www/html/wp-config-sample.php
