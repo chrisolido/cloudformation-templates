@@ -13,7 +13,19 @@ import requests
 import mysql.connector as mariadb
 
 def handler(event, context):
-    pass
+    db_endpoint = os.environ['DB_ENDPOINT']
+    db_name = os.environ['DB_NAME']
+    db_user = os.environ['DB_USER']
+    db_password = os.environ['DB_PASSWORD']
+
+    response_data = {
+        'DB_ENDPOINT': db_endpoint,
+        'DB_NAME': db_name,
+        'DB_USER': db_user,
+        'DB_PASSWORD': db_password
+    }
+
+    send_response(event, status='SUCCESS', data=response_data)
 
 
 def send_response(event, status, reason="", data=None):
