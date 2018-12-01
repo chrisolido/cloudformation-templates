@@ -5,6 +5,7 @@ for provisioning of new Wordpress Installations
 Database name and User name are equal to CloudFormation Stack Name
 and will be deleted along with the Stack
 """
+
 import os
 import json
 from uuid import uuid4
