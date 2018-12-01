@@ -49,6 +49,7 @@
         "VPC": {
             "Type": "AWS::EC2::VPC",
             "Properties": {
+                "EnableDnsSupport": true,
                 "CidrBlock": {
                     "Ref": "VPCCidr"
                 }
