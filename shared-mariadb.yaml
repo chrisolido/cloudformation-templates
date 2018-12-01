@@ -104,7 +104,8 @@ Resources:
       GroupDescription: RDS Security Group
       VpcId: !ImportValue shared-vpc-id
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        -
+          IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
           CidrIp: !ImportValue shared-vpc-cidr

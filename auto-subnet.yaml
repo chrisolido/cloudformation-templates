@@ -19,20 +19,25 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: Cidr
+        -
+          AttributeName: Cidr
           AttributeType: S
-        - AttributeName: StackId
+        -
+          AttributeName: StackId
           AttributeType: S
       KeySchema:
-        - AttributeName: Cidr
+        -
+          AttributeName: Cidr
           KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       GlobalSecondaryIndexes:
-        - IndexName: StackCidrRanges
+        -
+          IndexName: StackCidrRanges
           KeySchema:
-            - AttributeName: StackId
+            -
+              AttributeName: StackId
               KeyType: HASH
           Projection:
             ProjectionType: ALL
@@ -93,7 +98,8 @@ Resources:
           DYNAMO_REGION: !Ref AWS::Region
           RESERVED_CIDRS: !Sub
             - '["${CIDR1}", "${CIDR2}"]'
-            - CIDR1: !ImportValue shared-vpc-reserved-cidr1
+            -
+              CIDR1: !ImportValue shared-vpc-reserved-cidr1
               CIDR2: !ImportValue shared-vpc-reserved-cidr2
 Outputs:
   AutoSubnetLambdaARN:

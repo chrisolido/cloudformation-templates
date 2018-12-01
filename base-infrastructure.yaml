@@ -94,7 +94,8 @@ Resources:
           -
             NoncurrentVersionExpirationInDays: 60
             NoncurrentVersionTransitions:
-              - StorageClass: STANDARD_IA
+              -
+                StorageClass: STANDARD_IA
                 TransitionInDays: 30
             Status: Enabled
       VersioningConfiguration:
@@ -119,7 +120,8 @@ Resources:
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
-              - Effect: Allow
+              -
+                Effect: Allow
                 Action:
                   - s3:DeleteObject
                   - s3:ListBucket

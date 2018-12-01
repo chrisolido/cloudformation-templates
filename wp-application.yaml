@@ -115,7 +115,7 @@ Resources:
     Properties:
       RouteTableId: !ImportValue shared-vpc-public-rt
       SubnetId: !Ref PublicSubnet2
-  ApplicationLoadBalancer:
+  WPLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       SecurityGroups:
@@ -123,17 +123,17 @@ Resources:
       Subnets:
         - !Ref PublicSubnet1
         - !Ref PublicSubnet2
-  LoadBalancerListener:
+  WPLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      LoadBalancerArn: !Ref WPLoadBalancer
       Port: 80
       Protocol: HTTP
       DefaultActions:
         - Type: forward
           TargetGroupArn:
-            Ref: TargetGroup
-  TargetGroup:
+            Ref: WPTargetGroup
+  WPTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Matcher:
@@ -141,7 +141,7 @@ Resources:
       Port: 80
       Protocol: HTTP
       VpcId: !ImportValue shared-vpc-id
-  AutoScalingGroup:
+  WPAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     CreationPolicy:
       ResourceSignal:
@@ -157,13 +157,13 @@ Resources:
       VPCZoneIdentifier:
         - !Ref PublicSubnet1
         - !Ref PublicSubnet2
-      LaunchConfigurationName: !Ref EC2LaunchConfiguration
+      LaunchConfigurationName: !Ref WPLaunchConfiguration
       MinSize: !Ref MinSize
       MaxSize: !Ref MaxSize
       DesiredCapacity: !Ref DesiredCapacity
       TargetGroupARNs:
-        - !Ref TargetGroup
-  EC2LaunchConfiguration:
+        - !Ref WPTargetGroup
+  WPLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
@@ -171,14 +171,14 @@ Resources:
       IamInstanceProfile: !ImportValue wp-instance-profile
       KeyName: !Ref KeyPair
       SecurityGroups:
-        - !Ref EC2SecurityGroup
+        - !Ref WPSecurityGroup
       UserData:
         "Fn::Base64":
           !Sub |
             #!/bin/bash
             yum update -y
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WPAutoScalingGroup --region ${AWS::Region}
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
@@ -192,8 +192,8 @@ Resources:
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
-                path=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}
+                path=Resources.WPLaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}
               mode: "000400"
               owner: root
               group: root
@@ -294,8 +294,8 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-  EC2SecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+  WPSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " - ", !Ref ApplicationSize]]
       VpcId: !ImportValue shared-vpc-id
@@ -305,15 +305,15 @@ Resources:
           ToPort: 22
           FromPort: 22
           CidrIp: !Ref SSHLocation
-  EC2InboundRule: # EC2 can only accept HTTP traffic from ALB
+  WPInboundRule: # EC2 can only accept HTTP traffic from ALB
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       IpProtocol: tcp
       FromPort: 80
       ToPort: 80
       SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
-      GroupId: !GetAtt EC2SecurityGroup.GroupId
+      GroupId: !GetAtt WPSecurityGroup.GroupId
 Outputs:
   Website:
     Description: Public URL for Application
-    Value: !Sub "http://${ApplicationLoadBalancer.DNSName}"
+    Value: !Sub "http://${WPLoadBalancer.DNSName}"

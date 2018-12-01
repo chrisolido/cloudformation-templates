@@ -200,7 +200,7 @@
                 }
             }
         },
-        "ApplicationLoadBalancer": {
+        "WPLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
                 "SecurityGroups": [
@@ -218,11 +218,11 @@
                 ]
             }
         },
-        "LoadBalancerListener": {
+        "WPLoadBalancerListener": {
             "Type": "AWS::ElasticLoadBalancingV2::Listener",
             "Properties": {
                 "LoadBalancerArn": {
-                    "Ref": "ApplicationLoadBalancer"
+                    "Ref": "WPLoadBalancer"
                 },
                 "Port": 80,
                 "Protocol": "HTTP",
@@ -230,13 +230,13 @@
                     {
                         "Type": "forward",
                         "TargetGroupArn": {
-                            "Ref": "TargetGroup"
+                            "Ref": "WPTargetGroup"
                         }
                     }
                 ]
             }
         },
-        "TargetGroup": {
+        "WPTargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
                 "Matcher": {
@@ -249,7 +249,7 @@
                 }
             }
         },
-        "AutoScalingGroup": {
+        "WPAutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "CreationPolicy": {
                 "ResourceSignal": {
@@ -290,7 +290,7 @@
                     }
                 ],
                 "LaunchConfigurationName": {
-                    "Ref": "EC2LaunchConfiguration"
+                    "Ref": "WPLaunchConfiguration"
                 },
                 "MinSize": {
                     "Ref": "MinSize"
@@ -303,12 +303,12 @@
                 },
                 "TargetGroupARNs": [
                     {
-                        "Ref": "TargetGroup"
+                        "Ref": "WPTargetGroup"
                     }
                 ]
             }
         },
-        "EC2LaunchConfiguration": {
+        "WPLaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
                 "ImageId": {
@@ -337,12 +337,12 @@
                 },
                 "SecurityGroups": [
                     {
-                        "Ref": "EC2SecurityGroup"
+                        "Ref": "WPSecurityGroup"
                     }
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WPAutoScalingGroup --region ${AWS::Region}\n"
                     }
                 }
             },
@@ -359,7 +359,7 @@
                         "files": {
                             "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
                                 "content": {
-                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}\n"
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.WPLaunchConfiguration.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}\n"
                                 },
                                 "mode": "000400",
                                 "owner": "root",
@@ -505,7 +505,7 @@
                 ]
             }
         },
-        "EC2SecurityGroup": {
+        "WPSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": {
@@ -538,7 +538,7 @@
                 ]
             }
         },
-        "EC2InboundRule": {
+        "WPInboundRule": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
                 "IpProtocol": "tcp",
@@ -552,7 +552,7 @@
                 },
                 "GroupId": {
                     "Fn::GetAtt": [
-                        "EC2SecurityGroup",
+                        "WPSecurityGroup",
                         "GroupId"
                     ]
                 }
@@ -563,7 +563,7 @@
         "Website": {
             "Description": "Public URL for Application",
             "Value": {
-                "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}"
+                "Fn::Sub": "http://${WPLoadBalancer.DNSName}"
             }
         }
     }
