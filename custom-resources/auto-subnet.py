@@ -80,7 +80,7 @@ def handler(event, context):
 
     except Exception as err:
         send_response(
-            event, status='FAILED', reason="Failed to generate response data")
+            event, status='FAILED', reason="Failed to send response data")
         print("Error: " + str(err))
 
 
