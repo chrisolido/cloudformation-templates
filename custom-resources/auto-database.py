@@ -16,6 +16,7 @@ def handler(event, context):
     request_type = event['RequestType']
 
     if request_type == 'Delete':
+        send_response(event, status='SUCCESS')
         exit(1)
 
     try:
