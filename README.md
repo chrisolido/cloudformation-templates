@@ -8,6 +8,10 @@ Deploy a functional Wordpress instance on AWS with EC2 and RDS. Ability to resto
 
 Customization options include SSH CIDR IP range, instance size, and EC2 SSH key-pair.
 
+## Wordpress Datacenter
+
+Readme coming soon.
+
 ## Creating an EC2 Key Pair
 
 The use of these AWS CloudFormation templates will require you to specify an Amazon EC2 key pair for configuring SSH access to your instances.
