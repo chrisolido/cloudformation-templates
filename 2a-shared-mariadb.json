@@ -1,0 +1,391 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "RDS Database Configuration"
+                    },
+                    "Parameters": [
+                        "DatabaseName",
+                        "DatabaseUser",
+                        "DatabasePassword",
+                        "DatabaseSize",
+                        "SnapshotToRestore"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Code Bucket"
+                    },
+                    "Parameters": [
+                        "S3Bucket"
+                    ]
+                }
+            ]
+        }
+    },
+    "Parameters": {
+        "DatabaseName": {
+            "Type": "String",
+            "Default": "wordpress",
+            "MinLength": 1,
+            "MaxLength": 64,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabaseUser": {
+            "Type": "String",
+            "Default": "admin",
+            "MinLength": 1,
+            "MaxLength": 16,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabasePassword": {
+            "Type": "String",
+            "Default": "W0rdpr355",
+            "MinLength": 8,
+            "MaxLength": 41,
+            "AllowedPattern": "[a-zA-Z0-9~!#$%^&]*",
+            "NoEcho": true
+        },
+        "DatabaseSize": {
+            "Type": "String",
+            "Default": "DEV",
+            "AllowedValues": [
+                "DEV",
+                "SMALL",
+                "MEDIUM",
+                "LARGE"
+            ]
+        },
+        "SnapshotToRestore": {
+            "Description": "Restore from existing RDS snapshot (not required)",
+            "Type": "String",
+            "Default": ""
+        },
+        "S3Bucket": {
+            "Type": "String",
+            "Description": "Specify the S3 Bucket containing custom-resources.zip",
+            "MinLength": 3,
+            "MaxLength": 63,
+            "AllowedPattern": "[a-z0-9][a-z0-9\\.-]*"
+        }
+    },
+    "Conditions": {
+        "isRestore": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        },
+        "isProduction": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "DatabaseSize"
+                        },
+                        "DEV"
+                    ]
+                }
+            ]
+        }
+    },
+    "Mappings": {
+        "RDSInstanceSize": {
+            "DEV": {
+                "DB": "db.t2.micro",
+                "Size": "5"
+            },
+            "SMALL": {
+                "DB": "db.t2.medium",
+                "Size": "10"
+            },
+            "MEDIUM": {
+                "DB": "db.m5.large",
+                "Size": "20"
+            },
+            "LARGE": {
+                "DB": "db.m5.2xlarge",
+                "Size": "40"
+            }
+        }
+    },
+    "Resources": {
+        "SharedMariaDB": {
+            "Type": "AWS::RDS::DBInstance",
+            "DeletionPolicy": "Snapshot",
+            "Properties": {
+                "AllocatedStorage": {
+                    "Fn::FindInMap": [
+                        "RDSInstanceSize",
+                        {
+                            "Ref": "DatabaseSize"
+                        },
+                        "Size"
+                    ]
+                },
+                "StorageType": "gp2",
+                "BackupRetentionPeriod": "7",
+                "Engine": "MariaDB",
+                "DBSubnetGroupName": {
+                    "Ref": "DBSubnetGroup"
+                },
+                "DBName": {
+                    "Ref": "DatabaseName"
+                },
+                "MultiAZ": {
+                    "Fn::If": [
+                        "isProduction",
+                        true,
+                        false
+                    ]
+                },
+                "MasterUsername": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseUser"
+                        }
+                    ]
+                },
+                "MasterUserPassword": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabasePassword"
+                        }
+                    ]
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "DBInstanceClass": {
+                    "Fn::FindInMap": [
+                        "RDSInstanceSize",
+                        {
+                            "Ref": "DatabaseSize"
+                        },
+                        "DB"
+                    ]
+                },
+                "VPCSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ]
+            }
+        },
+        "DBSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "RDS Subnet Group",
+                "SubnetIds": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-subnet1"
+                    },
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-subnet2"
+                    }
+                ]
+            }
+        },
+        "DBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "RDS Security Group",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 3306,
+                        "ToPort": 3306,
+                        "CidrIp": {
+                            "Fn::ImportValue": "shared-vpc-cidr"
+                        }
+                    }
+                ]
+            }
+        },
+        "VpcEndpoint": {
+            "Type": "AWS::EC2::VPCEndpoint",
+            "Properties": {
+                "VpcEndpointType": "Gateway",
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "*",
+                            "Resource": "*",
+                            "Principal": "*"
+                        }
+                    ]
+                },
+                "RouteTableIds": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-rt"
+                    }
+                ],
+                "ServiceName": {
+                    "Fn::Sub": "com.amazonaws.${AWS::Region}.s3"
+                },
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                }
+            }
+        },
+        "LambdaRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
+        },
+        "LambdaPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "auto-database-policy",
+                "Roles": [
+                    {
+                        "Ref": "LambdaRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:*"
+                            ],
+                            "Resource": [
+                                "arn:aws:logs:*:*:*"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ec2:DescribeNetworkInterfaces",
+                                "ec2:CreateNetworkInterface",
+                                "ec2:DeleteNetworkInterface"
+                            ],
+                            "Resource": [
+                                "*"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "AutoDatabaseLambda": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaRole",
+                        "Arn"
+                    ]
+                },
+                "Code": {
+                    "S3Bucket": {
+                        "Ref": "S3Bucket"
+                    },
+                    "S3Key": "custom-resources.zip"
+                },
+                "Handler": "auto-database.handler",
+                "Runtime": "python3.6",
+                "Timeout": 300,
+                "MemorySize": 128,
+                "Environment": {
+                    "Variables": {
+                        "DB_ENDPOINT": {
+                            "Fn::GetAtt": [
+                                "SharedMariaDB",
+                                "Endpoint.Address"
+                            ]
+                        },
+                        "DB_NAME": {
+                            "Ref": "DatabaseName"
+                        },
+                        "DB_USER": {
+                            "Ref": "DatabaseUser"
+                        },
+                        "DB_PASSWORD": {
+                            "Ref": "DatabasePassword"
+                        }
+                    }
+                },
+                "VpcConfig": {
+                    "SecurityGroupIds": [
+                        {
+                            "Fn::GetAtt": [
+                                "DBSecurityGroup",
+                                "GroupId"
+                            ]
+                        }
+                    ],
+                    "SubnetIds": [
+                        {
+                            "Fn::ImportValue": "shared-vpc-private-subnet1"
+                        },
+                        {
+                            "Fn::ImportValue": "shared-vpc-private-subnet2"
+                        }
+                    ]
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "AutoSubnetLambdaARN": {
+            "Description": "ARN of auto-database Lambda",
+            "Value": {
+                "Fn::GetAtt": [
+                    "AutoDatabaseLambda",
+                    "Arn"
+                ]
+            },
+            "Export": {
+                "Name": "auto-database-lambda-arn"
+            }
+        }
+    }
+}

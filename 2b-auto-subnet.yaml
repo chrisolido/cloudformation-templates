@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: Code Bucket
+        Parameters:
+          - S3Bucket
+Parameters:
+  S3Bucket:
+    Type: String
+    Description: Specify the S3 Bucket containing custom-resources.zip
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9\\.-]*"
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: Cidr
+          AttributeType: S
+        -
+          AttributeName: StackId
+          AttributeType: S
+      KeySchema:
+        -
+          AttributeName: Cidr
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        -
+          IndexName: StackCidrRanges
+          KeySchema:
+            -
+              AttributeName: StackId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: auto-subnet-policy
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:*
+            Resource:
+              - arn:aws:logs:*:*:*
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:*
+            Resource:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*
+  AutoSubnetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: custom-resources.zip
+      Handler: auto-subnet.handler
+      Runtime: python3.6
+      Timeout: 120
+      MemorySize: 128
+      Environment:
+        Variables:
+          VPC_CIDR: !ImportValue shared-vpc-cidr
+          DYNAMO_TABLE_NAME: !Ref DynamoDBTable
+          DYNAMO_REGION: !Ref AWS::Region
+          RESERVED_CIDRS: !Sub
+            - '["${CIDR1}", "${CIDR2}"]'
+            -
+              CIDR1: !ImportValue shared-vpc-reserved-cidr1
+              CIDR2: !ImportValue shared-vpc-reserved-cidr2
+Outputs:
+  AutoSubnetLambdaARN:
+    Description: ARN of auto-subnet Lambda
+    Value: !GetAtt AutoSubnetLambda.Arn
+    Export:
+      Name: auto-subnet-lambda-arn

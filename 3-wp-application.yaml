@@ -1,0 +1,323 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: App Environment Configuration
+        Parameters:
+          - ApplicationSize
+          - KeyPair
+          - SSHLocation
+          - MinSize
+          - MaxSize
+          - DesiredCapacity
+Parameters:
+  ApplicationSize:
+    Type: String
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - SMALL
+      - MEDIUM
+      - LARGE
+    Description: Select Environment Size
+  KeyPair:
+    Description: Amazon EC2 Key Pair for SSH Access
+    Type: AWS::EC2::KeyPair::KeyName
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: "9"
+    MaxLength: "18"
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
+  MinSize:
+    Type: String
+    Description: Minimum number of EC2 instances
+    Default: "1"
+  MaxSize:
+    Type: String
+    Description: Minimum number of EC2 instances (Desired x 2)
+    Default: "2"
+  DesiredCapacity:
+    Type: String
+    Description: Desired number of EC2 instances
+    Default: "1"
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMALINUX: ami-013be31976ca2c322
+    us-east-2:
+      AMALINUX: ami-0b59bfac6be064b78
+    us-west-1:
+      AMALINUX: ami-01beb64058d271bc4
+    us-west-2:
+      AMALINUX: ami-061e7ebbc234015fe
+    ca-central-1:
+      AMALINUX: ami-076b4adb3f90cd384
+    eu-central-1:
+      AMALINUX: ami-02ea8f348fa28c108
+    eu-west-1:
+      AMALINUX: ami-0a5e707736615003c
+    eu-west-2:
+      AMALINUX: ami-0274e11dced17bb5b
+    eu-west-3:
+      AMALINUX: ami-051707cdba246187b
+    ap-northeast-1:
+      AMALINUX: ami-0a2de1c3b415889d2
+    ap-northeast-2:
+      AMALINUX: ami-0b4fdb56a00adb616
+    ap-south-1:
+      AMALINUX: ami-06bcd1131b2f55803
+    ap-southeast-1:
+      AMALINUX: ami-085fd1bd447be68e8
+    ap-southeast-2:
+      AMALINUX: ami-0b8dea0e70b969adc
+    sa-east-1:
+      AMALINUX: ami-0112d42866980b373
+  InstanceSize:
+    DEV:
+      EC2: t2.micro
+    SMALL:
+      EC2: t3.small
+    MEDIUM:
+      EC2: t3.medium
+    LARGE:
+      EC2: m5.large
+Resources:
+  AutoSubnetCustomResource:
+    Type: Custom::LambdaAutoSubnet
+    Properties:
+      ServiceToken: !ImportValue auto-subnet-lambda-arn
+  AutoDatabaseCustomResource:
+    Type: Custom::LambdaAutoDatabase
+    Properties:
+      ServiceToken: !ImportValue auto-database-lambda-arn
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPublicCIDR1
+      MapPublicIpOnLaunch: true
+      VpcId: !ImportValue shared-vpc-id
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs ]
+      CidrBlock: !GetAtt AutoSubnetCustomResource.AppPublicCIDR2
+      MapPublicIpOnLaunch: true
+      VpcId: !ImportValue shared-vpc-id
+  SubnetRouteTableAssociatePublic1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !ImportValue shared-vpc-public-rt
+      SubnetId: !Ref PublicSubnet1
+  SubnetRouteTableAssociatePublic2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !ImportValue shared-vpc-public-rt
+      SubnetId: !Ref PublicSubnet2
+  WPLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+  WPLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref WPLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: WPTargetGroup
+  WPTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Matcher:
+        HttpCode: "200-399"
+      Port: 80
+      Protocol: HTTP
+      VpcId: !ImportValue shared-vpc-id
+  WPAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    CreationPolicy:
+      ResourceSignal:
+        Count: !Ref DesiredCapacity
+        Timeout: PT5M
+    Properties:
+      Cooldown: "300"
+      HealthCheckGracePeriod: 300
+      HealthCheckType: ELB
+      AvailabilityZones:
+        - !Select [0, !GetAZs ]
+        - !Select [1, !GetAZs ]
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      LaunchConfigurationName: !Ref WPLaunchConfiguration
+      MinSize: !Ref MinSize
+      MaxSize: !Ref MaxSize
+      DesiredCapacity: !Ref DesiredCapacity
+      TargetGroupARNs:
+        - !Ref WPTargetGroup
+  WPLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
+      InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
+      IamInstanceProfile: !ImportValue wp-instance-profile
+      KeyName: !Ref KeyPair
+      SecurityGroups:
+        - !Ref WPSecurityGroup
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WPAutoScalingGroup --region ${AWS::Region}
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          wordpress:
+            - configure_cfn
+            - install_wordpress
+            - config_wordpress
+        configure_cfn:
+          files:
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.WPLaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPLaunchConfiguration --configsets wordpress --region ${AWS::Region}
+              mode: "000400"
+              owner: root
+              group: root
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                verbose=true
+                interval=5
+              mode: "000400"
+              owner: root
+              group: root
+          services:
+            # redirected to systemd
+            sysvinit:
+              cfn-hup:
+                enabled: true
+                ensureRunning: true
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        install_wordpress:
+          packages:
+            yum:
+              httpd: []
+              php: []
+              php-mysqlnd: []
+              mariadb: []
+          sources:
+            /var/www/html: http://wordpress.org/latest.tar.gz
+          services:
+            # redirected to systemd
+            sysvinit:
+              httpd:
+                enabled: true
+                ensureRunning: true
+                files :
+                  - /etc/httpd/conf/httpd.conf
+        config_wordpress:
+          commands:
+            00_sync:
+              # for new instances
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: !Sub
+                - aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html
+                - S3Bucket: !ImportValue wp-backup-bucket
+            01_copy_to_root:
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp -r wordpress/* /var/www/html
+            02_clone_wp_config:
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp wp-config-sample.php wp-config.php
+            03_direct_ftp_config:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
+              command: |
+                echo "define('FS_METHOD', 'direct');" >> wp-config.php
+                chmod -R 755 wp-content
+                chown -R apache:apache wp-content
+            04_database_config:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
+              command: !Sub
+                - |
+                  sed -i 's/localhost/${DBEndpoint}/g' wp-config.php
+                  sed -i 's/database_name_here/${DBName}/g' wp-config.php
+                  sed -i 's/username_here/${DBUser}/g' wp-config.php
+                  sed -i 's/password_here/${DBPassword}/g' wp-config.php
+                -
+                  DBEndpoint: !GetAtt AutoDatabaseCustomResource.DB_ENDPOINT
+                  DBName: !GetAtt AutoDatabaseCustomResource.DB_NAME
+                  DBUser: !GetAtt AutoDatabaseCustomResource.DB_USER
+                  DBPassword: !GetAtt AutoDatabaseCustomResource.DB_PASSWORD
+            05_setup_cron:
+              cwd: /etc
+              test: test -e /var/www/html/wp-config-sample.php
+              command: !Sub
+                - echo "*/30  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/" >> crontab
+                - S3Bucket: !ImportValue wp-backup-bucket
+            07_clean_up:
+              # this prevents init commands to be re-run
+              cwd: /var/www/html
+              command: |
+                rm -rf wordpress
+                rm -f wp-config-sample.php
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Security Group
+      VpcId: !ImportValue shared-vpc-id
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+  WPSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " - ", !Ref ApplicationSize]]
+      VpcId: !ImportValue shared-vpc-id
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          ToPort: 22
+          FromPort: 22
+          CidrIp: !Ref SSHLocation
+  WPInboundRule: # EC2 can only accept HTTP traffic from ALB
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
+      GroupId: !GetAtt WPSecurityGroup.GroupId
+Outputs:
+  Website:
+    Description: Public URL for Application
+    Value: !Sub "http://${WPLoadBalancer.DNSName}"
