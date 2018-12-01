@@ -81,7 +81,7 @@ def handler(event, context):
     except Exception as err:
         send_response(
             event, status='FAILED', reason="Failed to send response data")
-        print("Error: " + str(err))
+        print(f"Error: {err}")
 
 
 def use_subnet(cidr, stack_id):
@@ -112,7 +112,7 @@ def delete_subnets(event, stack_id):
             event,
             status='FAILED',
             reason='Failed to delete allocated subnets in DynamoDB')
-        print("Error: " + str(err))
+        print(f"Error: {err}")
 
 
 def send_response(event, status, reason="", data=None):
