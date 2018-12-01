@@ -13,6 +13,11 @@ import requests
 import mysql.connector as mariadb
 
 def handler(event, context):
+    request_type = event['RequestType']
+
+    if request_type == 'Delete':
+        exit(1)
+
     try:
         db_endpoint = os.environ['DB_ENDPOINT']
         db_name = os.environ['DB_NAME']
