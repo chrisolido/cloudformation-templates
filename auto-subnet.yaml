@@ -1,4 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterLabels:
+      S3Bucket: Code S3 Bucket
 Parameters:
   S3Bucket:
     Type: String

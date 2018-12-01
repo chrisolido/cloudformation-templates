@@ -10,6 +10,8 @@ Metadata:
           - DatabasePassword
           - DatabaseSize
           - SnapshotToRestore
+    ParameterLabels:
+      S3Bucket: Code S3 Bucket
 Parameters:
   DatabaseName:
     Type: String
@@ -42,6 +44,12 @@ Parameters:
     Description: Restore from existing RDS snapshot (not required)
     Type: String
     Default: ""
+  S3Bucket:
+    Type: String
+    Description: Specify the S3 Bucket containing custom-resources.zip
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9\\.-]*"
 Conditions:
   isRestore:
     !Not [!Equals [!Ref SnapshotToRestore, ""]]
