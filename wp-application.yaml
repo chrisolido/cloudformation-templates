@@ -323,6 +323,6 @@ Resources:
       SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
       GroupId: !GetAtt EC2SecurityGroup.GroupId
 Outputs:
-  Endpoint:
-    Description: Application URL
+  Website:
+    Description: Public URL for Application
     Value: !Sub "http://${ApplicationLoadBalancer.DNSName}"

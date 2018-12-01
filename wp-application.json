@@ -568,8 +568,8 @@
         }
     },
     "Outputs": {
-        "Endpoint": {
-            "Description": "Application URL",
+        "Website": {
+            "Description": "Public URL for Application",
             "Value": {
                 "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}"
             }
