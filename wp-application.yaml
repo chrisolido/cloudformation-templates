@@ -180,7 +180,7 @@ Resources:
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
       InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
-      IamInstanceProfile: !ImportValue shared-ec2-instance-profile
+      IamInstanceProfile: !ImportValue wp-instance-profile
       KeyName: !Ref KeyPair
       SecurityGroups:
         - !Ref EC2SecurityGroup
@@ -253,7 +253,7 @@ Resources:
               test: test ! -e /var/www/html/wp-config.php
               command: !Sub
                 - aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html
-                - S3Bucket: !ImportValue shared-bucket
+                - S3Bucket: !ImportValue wp-backup-bucket
             01_copy_to_root:
               cwd: /var/www/html
               test: test ! -e /var/www/html/wp-config.php
@@ -287,7 +287,7 @@ Resources:
               test: test -e /var/www/html/wp-config-sample.php
               command: !Sub
                 - echo "*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/" >> crontab
-                - S3Bucket: !ImportValue shared-bucket
+                - S3Bucket: !ImportValue wp-backup-bucket
             07_clean_up:
               # this prevents init commands to be re-run
               cwd: /var/www/html

@@ -338,7 +338,7 @@
                     ]
                 },
                 "IamInstanceProfile": {
-                    "Fn::ImportValue": "shared-ec2-instance-profile"
+                    "Fn::ImportValue": "wp-instance-profile"
                 },
                 "KeyName": {
                     "Ref": "KeyPair"
@@ -429,7 +429,7 @@
                                         "aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html",
                                         {
                                             "S3Bucket": {
-                                                "Fn::ImportValue": "shared-bucket"
+                                                "Fn::ImportValue": "wp-backup-bucket"
                                             }
                                         }
                                     ]
@@ -481,7 +481,7 @@
                                         "echo \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/\" >> crontab",
                                         {
                                             "S3Bucket": {
-                                                "Fn::ImportValue": "shared-bucket"
+                                                "Fn::ImportValue": "wp-backup-bucket"
                                             }
                                         }
                                     ]
