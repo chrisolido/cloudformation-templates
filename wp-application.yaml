@@ -5,8 +5,7 @@ Metadata:
       - Label:
           default: "App Environment Configuration"
         Parameters:
-          - AppVersion
-          - EnvironmentSize
+          - ApplicationSize
           - KeyPair
           - SSHLocation
           - MinSize
@@ -18,10 +17,7 @@ Metadata:
           - AppPublicCIDR1
           - AppPublicCIDR2
 Parameters:
-  AppVersion:
-    Type: String
-    Description: Application Version to Deploy
-  EnvironmentSize:
+  ApplicationSize:
     Type: String
     Default: DEV
     AllowedValues:
@@ -183,7 +179,7 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
-      InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
+      InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
       IamInstanceProfile: !ImportValue shared-ec2-instance-profile
       KeyName: !Ref KeyPair
       SecurityGroups:
@@ -311,7 +307,7 @@ Resources:
   EC2SecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " v", !Ref AppVersion, " - ", !Ref EnvironmentSize]]
+      GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " - ", !Ref ApplicationSize]]
       VpcId: !ImportValue shared-vpc-id
       SecurityGroupIngress:
         - IpProtocol: tcp

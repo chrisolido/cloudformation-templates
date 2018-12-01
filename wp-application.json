@@ -8,8 +8,7 @@
                         "default": "App Environment Configuration"
                     },
                     "Parameters": [
-                        "AppVersion",
-                        "EnvironmentSize",
+                        "ApplicationSize",
                         "KeyPair",
                         "SSHLocation",
                         "MinSize",
@@ -30,11 +29,7 @@
         }
     },
     "Parameters": {
-        "AppVersion": {
-            "Type": "String",
-            "Description": "Application Version to Deploy"
-        },
-        "EnvironmentSize": {
+        "ApplicationSize": {
             "Type": "String",
             "Default": "DEV",
             "AllowedValues": [
@@ -337,7 +332,7 @@
                     "Fn::FindInMap": [
                         "InstanceSize",
                         {
-                            "Ref": "EnvironmentSize"
+                            "Ref": "ApplicationSize"
                         },
                         "EC2"
                     ]
@@ -529,13 +524,9 @@
                             {
                                 "Ref": "AWS::StackId"
                             },
-                            " v",
-                            {
-                                "Ref": "AppVersion"
-                            },
                             " - ",
                             {
-                                "Ref": "EnvironmentSize"
+                                "Ref": "ApplicationSize"
                             }
                         ]
                     ]
