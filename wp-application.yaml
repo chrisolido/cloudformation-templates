@@ -155,7 +155,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Matcher:
-        HttpCode: '200-399'
+        HttpCode: "200-399"
       Port: 80
       Protocol: HTTP
       VpcId: !ImportValue shared-vpc-id
