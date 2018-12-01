@@ -121,7 +121,7 @@ def send_response(event, status, reason="", data=None):
         data = {}
 
     if status == 'FAILED':
-        print(reason)
+        print(f'FAILED: {reason}')
 
     payload = {
         'StackId': event['StackId'],

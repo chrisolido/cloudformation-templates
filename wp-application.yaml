@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
+      -
+        Label:
           default: App Environment Configuration
         Parameters:
           - ApplicationSize
@@ -265,7 +266,8 @@ Resources:
                   sed -i 's/database_name_here/${DBName}/g' wp-config.php
                   sed -i 's/username_here/${DBUser}/g' wp-config.php
                   sed -i 's/password_here/${DBPassword}/g' wp-config.php
-                - DBEndpoint: !ImportValue shared-rds-instance-endpoint
+                -
+                  DBEndpoint: !ImportValue shared-rds-instance-endpoint
                   DBName: !ImportValue shared-rds-database-name
                   DBUser: !ImportValue shared-rds-root-user
                   DBPassword: !ImportValue shared-rds-root-password
@@ -287,7 +289,8 @@ Resources:
       GroupDescription: ALB Security Group
       VpcId: !ImportValue shared-vpc-id
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        -
+          IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
@@ -297,7 +300,8 @@ Resources:
       GroupDescription: !Join ["", ["Stack ", !Ref "AWS::StackId", " - ", !Ref ApplicationSize]]
       VpcId: !ImportValue shared-vpc-id
       SecurityGroupIngress:
-        - IpProtocol: tcp
+        -
+          IpProtocol: tcp
           ToPort: 22
           FromPort: 22
           CidrIp: !Ref SSHLocation

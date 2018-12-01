@@ -2,9 +2,16 @@
     "AWSTemplateFormatVersion": "2010-09-09",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
-            "ParameterLabels": {
-                "S3Bucket": "Code S3 Bucket"
-            }
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Code Bucket"
+                    },
+                    "Parameters": [
+                        "S3Bucket"
+                    ]
+                }
+            ]
         }
     },
     "Parameters": {

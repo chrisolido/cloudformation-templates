@@ -1,8 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Metadata:
   AWS::CloudFormation::Interface:
-    ParameterLabels:
-      S3Bucket: Code S3 Bucket
+    ParameterGroups:
+      -
+        Label:
+          default: Code Bucket
+        Parameters:
+          - S3Bucket
 Parameters:
   S3Bucket:
     Type: String
@@ -41,7 +45,8 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          -
+            Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
@@ -57,12 +62,14 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          -
+            Effect: Allow
             Action:
               - logs:*
             Resource:
               - arn:aws:logs:*:*:*
-          - Effect: Allow
+          -
+            Effect: Allow
             Action:
               - dynamodb:*
             Resource:

@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
+      -
+        Label:
           default: Networking Environment Configuration
         Parameters:
           - VPCCidr
@@ -90,7 +91,8 @@ Resources:
     Properties:
       LifecycleConfiguration:
         Rules:
-          - NoncurrentVersionExpirationInDays: 60
+          -
+            NoncurrentVersionExpirationInDays: 60
             NoncurrentVersionTransitions:
               - StorageClass: STANDARD_IA
                 TransitionInDays: 30
@@ -103,7 +105,8 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
+          -
+            Effect: Allow
             Principal:
               Service:
                 - ec2.amazonaws.com
@@ -111,7 +114,8 @@ Resources:
               - sts:AssumeRole
       Path: "/"
       Policies:
-        - PolicyName: EC2SyncS3Bucket
+        -
+          PolicyName: EC2SyncS3Bucket
           PolicyDocument:
             Version: "2012-10-17"
             Statement:

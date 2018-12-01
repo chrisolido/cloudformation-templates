@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
+      -
+        Label:
           default: RDS Database Configuration
         Parameters:
           - DatabaseName
@@ -10,8 +11,11 @@ Metadata:
           - DatabasePassword
           - DatabaseSize
           - SnapshotToRestore
-    ParameterLabels:
-      S3Bucket: Code S3 Bucket
+      -
+        Label:
+          default: Code Bucket
+        Parameters:
+          - S3Bucket
 Parameters:
   DatabaseName:
     Type: String
@@ -76,6 +80,7 @@ Resources:
     Properties:
       AllocatedStorage: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, Size]
       StorageType: gp2
+      BackupRetentionPeriod: "7"
       Engine: MariaDB
       DBSubnetGroupName: !Ref DBSubnetGroup
       DBName: !Ref DatabaseName

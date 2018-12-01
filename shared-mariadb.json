@@ -14,11 +14,16 @@
                         "DatabaseSize",
                         "SnapshotToRestore"
                     ]
+                },
+                {
+                    "Label": {
+                        "default": "Code Bucket"
+                    },
+                    "Parameters": [
+                        "S3Bucket"
+                    ]
                 }
-            ],
-            "ParameterLabels": {
-                "S3Bucket": "Code S3 Bucket"
-            }
+            ]
         }
     },
     "Parameters": {
@@ -128,6 +133,7 @@
                     ]
                 },
                 "StorageType": "gp2",
+                "BackupRetentionPeriod": "7",
                 "Engine": "MariaDB",
                 "DBSubnetGroupName": {
                     "Ref": "DBSubnetGroup"
