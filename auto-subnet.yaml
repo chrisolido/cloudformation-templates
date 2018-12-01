@@ -1,26 +1,34 @@
 AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  S3Bucket:
+    Type: String
+    Description: Specify the S3 Bucket containing custom-resources.zip
+    Default: !ImportValue wp-backup-bucket
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9\\.-]*"
 Resources:
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: "Cidr"
-          AttributeType: "S"
-        - AttributeName: "StackId"
-          AttributeType: "S"
-        - AttributeName: "StackName"
-          AttributeType: "S"
+        - AttributeName: Cidr
+          AttributeType: S
+        - AttributeName: StackId
+          AttributeType: S
+        - AttributeName: StackName
+          AttributeType: S
       KeySchema:
-        - AttributeName: "Cidr"
-          KeyType: "HASH"
+        - AttributeName: Cidr
+          KeyType: HASH
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       GlobalSecondaryIndexes:
-        - IndexName: "StackCidrRange"
+        - IndexName: StackId
           KeySchema:
-            - AttributeName: "StackId"
-              KeyType: "HASH"
+            - AttributeName: StackId
+              KeyType: HASH
           Projection:
             ProjectionType: ALL
           ProvisionedThroughput:
@@ -50,12 +58,12 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - "logs:*"
+              - logs:*
             Resource:
-              - "arn:aws:logs:*:*:*"
+              - arn:aws:logs:*:*:*
           - Effect: Allow
             Action:
-              - "dynamodb:*"
+              - dynamodb:*
             Resource:
               - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}
               - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDBTable}/index/*
