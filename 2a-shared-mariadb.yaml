@@ -121,8 +121,9 @@ Resources:
             Action: '*'
             Resource: '*'
             Principal: '*'
-      RouteTableIds: !ImportValue shared-vpc-private-rt
-      ServiceName: !Sub com.amazonaws.{AWS::Region}.s3
+      RouteTableIds:
+        - !ImportValue shared-vpc-private-rt
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       VpcId: !ImportValue shared-vpc-id
   LambdaRole:
     Type: AWS::IAM::Role

@@ -244,11 +244,13 @@
                         }
                     ]
                 },
-                "RouteTableIds": {
-                    "Fn::ImportValue": "shared-vpc-private-rt"
-                },
+                "RouteTableIds": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-rt"
+                    }
+                ],
                 "ServiceName": {
-                    "Fn::Sub": "com.amazonaws.{AWS::Region}.s3"
+                    "Fn::Sub": "com.amazonaws.${AWS::Region}.s3"
                 },
                 "VpcId": {
                     "Fn::ImportValue": "shared-vpc-id"
