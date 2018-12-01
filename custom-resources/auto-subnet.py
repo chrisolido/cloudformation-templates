@@ -57,7 +57,7 @@ def handler(event, context):
 
     # read all the subnets for this stack from table
     response = dynamodb_table.query(
-        IndexName='StackCidrRange',
+        IndexName='StackCidrRanges',
         KeyConditionExpression=Key('StackId').eq(stack_id))
 
     if len(response['Items']) < number_to_allocate:

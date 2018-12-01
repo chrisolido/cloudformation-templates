@@ -15,8 +15,6 @@ Resources:
           AttributeType: S
         - AttributeName: StackId
           AttributeType: S
-        - AttributeName: StackName
-          AttributeType: S
       KeySchema:
         - AttributeName: Cidr
           KeyType: HASH
@@ -24,7 +22,7 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       GlobalSecondaryIndexes:
-        - IndexName: StackId
+        - IndexName: StackCidrRanges
           KeySchema:
             - AttributeName: StackId
               KeyType: HASH
@@ -71,7 +69,7 @@ Resources:
     Properties:
       Role: !GetAtt IAMRole.Arn
       Code:
-        S3Bucket: !ImportValue shared-bucket
+        S3Bucket: !Ref S3Bucket
         S3Key: custom-resources.zip
       Handler: auto-subnet.handler
       Runtime: python3.6

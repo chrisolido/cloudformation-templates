@@ -21,10 +21,6 @@
                     {
                         "AttributeName": "StackId",
                         "AttributeType": "S"
-                    },
-                    {
-                        "AttributeName": "StackName",
-                        "AttributeType": "S"
                     }
                 ],
                 "KeySchema": [
@@ -39,7 +35,7 @@
                 },
                 "GlobalSecondaryIndexes": [
                     {
-                        "IndexName": "StackId",
+                        "IndexName": "StackCidrRanges",
                         "KeySchema": [
                             {
                                 "AttributeName": "StackId",
@@ -129,7 +125,7 @@
                 },
                 "Code": {
                     "S3Bucket": {
-                        "Fn::ImportValue": "shared-bucket"
+                        "Ref": "S3Bucket"
                     },
                     "S3Key": "custom-resources.zip"
                 },
