@@ -156,12 +156,11 @@ Resources:
           DB_USER: !Ref DatabaseUser
           DB_PASSWORD: !Ref DatabasePassword
       VpcConfig:
-        -
-          SecurityGroupIds:
-            - !GetAtt DBSecurityGroup.GroupId
-          SubnetIds:
-            - !ImportValue shared-vpc-private-subnet1
-            - !ImportValue shared-vpc-private-subnet2
+        SecurityGroupIds:
+          - !GetAtt DBSecurityGroup.GroupId
+        SubnetIds:
+          - !ImportValue shared-vpc-private-subnet1
+          - !ImportValue shared-vpc-private-subnet2
 Outputs:
   AutoSubnetLambdaARN:
     Description: ARN of auto-database Lambda
