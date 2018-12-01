@@ -13,6 +13,10 @@ import requests
 import mysql.connector as mariadb
 
 def handler(event, context):
+    """Create new database and user for Wordpress application in MariaDB"""
+    print(f"Function ARN: {context.invoked_function_arn}")
+    print(f"Event: {json.dumps(event)}")
+
     request_type = event['RequestType']
 
     if request_type == 'Delete':
