@@ -3,12 +3,12 @@
     "Parameters": {
         "EnvironmentSize": {
             "Type": "String",
-            "Default": "SMALL",
+            "Default": "DEV",
             "AllowedValues": [
+                "DEV",
                 "SMALL",
                 "MEDIUM",
-                "LARGE",
-                "XLARGE"
+                "LARGE"
             ],
             "Description": "Select Environment Size (S,M,L)"
         },
@@ -116,26 +116,26 @@
             }
         },
         "InstanceSize": {
-            "SMALL": {
+            "DEV": {
                 "EC2": "t2.micro",
                 "DB": "db.t2.micro"
             },
-            "MEDIUM": {
+            "SMALL": {
                 "EC2": "t3.small",
                 "DB": "db.t2.small"
             },
-            "LARGE": {
+            "MEDIUM": {
                 "EC2": "t3.medium",
                 "DB": "db.t2.medium"
             },
-            "XLARGE": {
+            "LARGE": {
                 "EC2": "m5.large",
-                "DB": "db.t2.large"
+                "DB": "db.m5.large"
             }
         }
     },
     "Resources": {
-        "DBInstance": {
+        "MariaDB": {
             "Type": "AWS::RDS::DBInstance",
             "DeletionPolicy": "Snapshot",
             "Properties": {
@@ -209,13 +209,13 @@
                 "DBSecurityGroupIngress": [
                     {
                         "EC2SecurityGroupName": {
-                            "Ref": "EC2SecurityGroup"
+                            "Ref": "WPSecurityGroup"
                         }
                     }
                 ]
             }
         },
-        "EC2Instance": {
+        "WPInstance": {
             "Type": "AWS::EC2::Instance",
             "DeletionPolicy": "Delete",
             "Properties": {
@@ -238,7 +238,7 @@
                     ]
                 },
                 "IamInstanceProfile": {
-                    "Ref": "EC2InstanceProfile"
+                    "Ref": "WPInstanceProfile"
                 },
                 "KeyName": {
                     "Ref": "KeyPair"
@@ -246,20 +246,20 @@
                 "SecurityGroupIds": [
                     {
                         "Fn::GetAtt": [
-                            "EC2SecurityGroup",
+                            "WPSecurityGroup",
                             "GroupId"
                         ]
                     }
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPInstance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WPInstance --region ${AWS::Region}\n"
                     }
                 }
             },
             "CreationPolicy": {
                 "ResourceSignal": {
-                    "Timeout": "PT15M"
+                    "Timeout": "PT5M"
                 }
             },
             "Metadata": {
@@ -275,7 +275,7 @@
                         "files": {
                             "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
                                 "content": {
-                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets wordpress --region ${AWS::Region}\n"
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.WPInstance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPInstance --configsets wordpress --region ${AWS::Region}\n"
                                 },
                                 "mode": 256,
                                 "owner": "root",
@@ -333,7 +333,7 @@
                                 "cwd": "/var/www/html",
                                 "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": {
-                                    "Fn::Sub": "aws s3 sync s3://${S3Bucket} /var/www/html"
+                                    "Fn::Sub": "aws s3 sync s3://${WPBackupBucket} /var/www/html"
                                 }
                             },
                             "01_copy_to_root": {
@@ -355,7 +355,7 @@
                                 "cwd": "/var/www/html",
                                 "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": {
-                                    "Fn::Sub": "sed -i 's/localhost/${DBInstance.Endpoint.Address}/g' wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
+                                    "Fn::Sub": "sed -i 's/localhost/${MariaDB.Endpoint.Address}/g' wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
                                 }
                             },
                             "05_wp_url_config": {
@@ -367,7 +367,7 @@
                                 "cwd": "/etc",
                                 "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": {
-                                    "Fn::Sub": "echo \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}\" >> crontab\n"
+                                    "Fn::Sub": "echo \"*/30  *  *  *  * root aws s3 sync --delete /var/www/html s3://${WPBackupBucket}\" >> crontab\n"
                                 }
                             },
                             "07_clean_up": {
@@ -379,7 +379,7 @@
                 }
             }
         },
-        "EC2SecurityGroup": {
+        "WPSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "Open Ports 22 and 80",
@@ -401,7 +401,7 @@
                 ]
             }
         },
-        "EC2Role": {
+        "WPSyncS3Role": {
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {
@@ -439,10 +439,10 @@
                                     ],
                                     "Resource": [
                                         {
-                                            "Fn::Sub": "${S3Bucket.Arn}"
+                                            "Fn::Sub": "${WPBackupBucket.Arn}"
                                         },
                                         {
-                                            "Fn::Sub": "${S3Bucket.Arn}/*"
+                                            "Fn::Sub": "${WPBackupBucket.Arn}/*"
                                         }
                                     ]
                                 }
@@ -452,20 +452,20 @@
                 ]
             }
         },
-        "EC2InstanceProfile": {
+        "WPInstanceProfile": {
             "Type": "AWS::IAM::InstanceProfile",
             "Properties": {
                 "Path": "/",
                 "Roles": [
                     {
-                        "Ref": "EC2Role"
+                        "Ref": "WPSyncS3Role"
                     }
                 ]
             }
         },
-        "S3Bucket": {
+        "WPBackupBucket": {
             "Type": "AWS::S3::Bucket",
-            "DeletionPolicy": "Delete",
+            "DeletionPolicy": "Retain",
             "Properties": {
                 "LifecycleConfiguration": {
                     "Rules": [
@@ -488,10 +488,10 @@
         }
     },
     "Outputs": {
-        "PublicURL": {
-            "Description": "The Public DNS for the EC2 Instance",
+        "Website": {
+            "Description": "The Public URL for the Wordpress Server",
             "Value": {
-                "Fn::Sub": "http://${EC2Instance.PublicDnsName}"
+                "Fn::Sub": "http://${WPInstance.PublicDnsName}"
             }
         }
     }
