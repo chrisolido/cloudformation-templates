@@ -247,14 +247,7 @@
                     "Fn::ImportValue": "shared-vpc-private-rt"
                 },
                 "ServiceName": {
-                    "Fn::Sub": [
-                        "com.amazonaws.{Region}.s3",
-                        {
-                            "Region": {
-                                "Ref": "AWS::Region"
-                            }
-                        }
-                    ]
+                    "Fn::Sub": "com.amazonaws.{AWS::Region}.s3"
                 },
                 "VpcId": {
                     "Fn::ImportValue": "shared-vpc-id"

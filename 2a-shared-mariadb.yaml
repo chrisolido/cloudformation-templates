@@ -120,10 +120,7 @@ Resources:
             Resource: '*'
             Principal: '*'
       RouteTableIds: !ImportValue shared-vpc-private-rt
-      ServiceName: !Sub
-          - com.amazonaws.{Region}.s3
-          -
-            Region: !Ref 'AWS::Region'
+      ServiceName: !Sub com.amazonaws.{AWS::Region}.s3
       VpcId: !ImportValue shared-vpc-id
   LambdaRole:
     Type: AWS::IAM::Role
