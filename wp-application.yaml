@@ -3,7 +3,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "App Environment Configuration"
+          default: App Environment Configuration
         Parameters:
           - ApplicationSize
           - KeyPair
@@ -12,7 +12,7 @@ Metadata:
           - MaxSize
           - DesiredCapacity
       - Label:
-          default: "App Environment Networking"
+          default: App Environment Networking
         Parameters:
           - AppPublicCIDR1
           - AppPublicCIDR2
@@ -286,7 +286,7 @@ Resources:
               cwd: /etc
               test: test -e /var/www/html/wp-config-sample.php
               command: !Sub
-                - echo "*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/" >> crontab
+                - echo "*/30  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/" >> crontab
                 - S3Bucket: !ImportValue wp-backup-bucket
             07_clean_up:
               # this prevents init commands to be re-run

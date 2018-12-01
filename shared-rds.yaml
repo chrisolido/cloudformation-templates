@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: RDS Database Configuration
+        Parameters:
+          - DatabaseName
+          - DatabaseUser
+          - DatabasePassword
+          - DatabaseSize
+          - SnapshotToRestore
+Parameters:
+  DatabaseName:
+    Type: String
+    Default: wordpress
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+  DatabaseUser:
+    Type: String
+    Default: admin
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
+  DatabasePassword:
+    Type: String
+    Default: W0rdpr355
+    MinLength: 8
+    MaxLength: 41
+    AllowedPattern: "[a-zA-Z0-9~!#$%^&]*"
+    NoEcho: true
+  DatabaseSize:
+    Type: String
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - SMALL
+      - MEDIUM
+      - LARGE
+  SnapshotToRestore:
+    Description: Restore from existing RDS snapshot (not required)
+    Type: String
+    Default: ""
+Conditions:
+  isRestore:
+    !Not [!Equals [!Ref SnapshotToRestore, ""]]
+  isProduction:
+    !Not [!Equals [!Ref DatabaseSize, DEV]]
+Mappings:
+  RDSInstanceSize:
+    DEV:
+      DB: db.t2.micro
+      Size: "5"
+    SMALL:
+      DB: db.t2.medium
+      Size: "10"
+    MEDIUM:
+      DB: db.m5.large
+      Size: "20"
+    LARGE:
+      DB: db.m5.2xlarge
+      Size: "40"
+Resources:
+  SharedRDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      AllocatedStorage: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, Size]
+      StorageType: gp2
+      Engine: MariaDB
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      DBName: !Ref DatabaseName
+      MultiAZ: !If [isProduction, true, false]
+      MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
+      MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
+      DBSnapshotIdentifier: !If [isRestore, !Ref SnapshotToRestore, !Ref "AWS::NoValue"]
+      DBInstanceClass: !FindInMap [RDSInstanceSize, !Ref DatabaseSize, DB]
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS Subnet Group
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: !Ref VPCCidr
+Outputs:
+  DatabaseEndpoint:
+    Description: RDS Database Endpoint
+    Value: !GetAtt SharedRDSInstance.Endpoint.Address
+    Export:
+      Name: shared-rds-instance-endpoint
+  DatabaseName:
+    Description: RDS Database Name
+    Value: !Ref DatabaseName
+    Export:
+      Name: shared-rds-database-name
+  DatabaseUser:
+    Description: Root User of RDS Instance
+    Value: !Ref DatabaseUser
+    Export:
+      Name: shared-rds-root-user
+  DatabasePassword:
+    Description: Root user password of RDS Instance
+    Value: !Ref DatabasePassword
+    Export:
+      Name: shared-rds-root-password

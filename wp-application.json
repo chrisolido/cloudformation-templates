@@ -478,7 +478,7 @@
                                 "test": "test -e /var/www/html/wp-config-sample.php",
                                 "command": {
                                     "Fn::Sub": [
-                                        "echo \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/\" >> crontab",
+                                        "echo \"*/30  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/\" >> crontab",
                                         {
                                             "S3Bucket": {
                                                 "Fn::ImportValue": "wp-backup-bucket"

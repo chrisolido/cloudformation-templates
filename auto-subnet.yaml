@@ -65,7 +65,7 @@ Resources:
       Role: !GetAtt IAMRole.Arn
       Code:
         S3Bucket: !ImportValue shared-bucket
-        S3Key: custom-lambdas.zip
+        S3Key: custom-resources.zip
       Handler: auto-subnet.handler
       Runtime: python3.6
       Timeout: 300
