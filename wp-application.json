@@ -323,11 +323,6 @@
         },
         "EC2LaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT5M"
-                }
-            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -360,24 +355,24 @@
                 ],
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets www --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}\n"
                     }
                 }
             },
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "configSets": {
-                        "www": [
+                        "wordpress": [
                             "configure_cfn",
-                            "install_www",
-                            "config_app"
+                            "install_wordpress",
+                            "config_wordpress"
                         ]
                     },
                     "configure_cfn": {
                         "files": {
                             "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
                                 "content": {
-                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}\n"
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}\n"
                                 },
                                 "mode": "000400",
                                 "owner": "root",
@@ -395,8 +390,8 @@
                         "services": {
                             "sysvinit": {
                                 "cfn-hup": {
-                                    "enabled": "true",
-                                    "ensureRunning": "true",
+                                    "enabled": true,
+                                    "ensureRunning": true,
                                     "files": [
                                         "/etc/cfn/cfn-hup.conf",
                                         "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
@@ -405,66 +400,101 @@
                             }
                         }
                     },
-                    "install_www": {
+                    "install_wordpress": {
                         "packages": {
                             "yum": {
                                 "httpd": [],
-                                "php": []
+                                "php": [],
+                                "php-mysqlnd": [],
+                                "mariadb": []
                             }
+                        },
+                        "sources": {
+                            "/var/www/html": "http://wordpress.org/latest.tar.gz"
                         },
                         "services": {
                             "sysvinit": {
                                 "httpd": {
-                                    "enabled": "true",
-                                    "ensureRunning": "true"
+                                    "enabled": true,
+                                    "ensureRunning": true,
+                                    "files": [
+                                        "/etc/httpd/conf/httpd.conf"
+                                    ]
                                 }
                             }
                         }
                     },
-                    "config_app": {
-                        "sources": {
-                            "/var/www/html": {
-                                "Fn::Join": [
-                                    "",
-                                    [
-                                        {
-                                            "Fn::ImportValue": "shared-bucket-url"
-                                        },
-                                        "/App-",
-                                        {
-                                            "Ref": "AppVersion"
-                                        },
-                                        ".zip"
-                                    ]
-                                ]
-                            }
-                        },
-                        "files": {
-                            "/var/www/html/test.pattern.zip": {
-                                "source": {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            {
-                                                "Fn::ImportValue": "shared-bucket-url"
-                                            },
-                                            "/Test-",
-                                            {
-                                                "Ref": "AppVersion"
-                                            },
-                                            ".zip"
-                                        ]
-                                    ]
-                                },
-                                "mode": "000644",
-                                "owner": "root",
-                                "group": "root"
-                            }
-                        },
+                    "config_wordpress": {
                         "commands": {
-                            "unzippattern": {
+                            "00_sync": {
                                 "cwd": "/var/www/html",
-                                "command": "unzip -o test.pattern.zip"
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": {
+                                    "Fn::Sub": [
+                                        "aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html",
+                                        {
+                                            "S3Bucket": {
+                                                "Fn::ImportValue": "shared-bucket"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "01_copy_to_root": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp -r wordpress/* /var/www/html"
+                            },
+                            "02_clone_wp_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp wp-config-sample.php wp-config.php"
+                            },
+                            "03_direct_ftp_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": "echo \"define('FS_METHOD', 'direct');\" >> wp-config.php\nchmod -R 755 wp-content\nchown -R apache:apache wp-content\n"
+                            },
+                            "04_database_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": {
+                                    "Fn::Sub": [
+                                        "sed -i 's/localhost/${DBEndpoint}/g' wp-config.php\nsed -i 's/database_name_here/${DBName}/g' wp-config.php\nsed -i 's/username_here/${DBUser}/g' wp-config.php\nsed -i 's/password_here/${DBPassword}/g' wp-config.php\n",
+                                        {
+                                            "DBEndpoint": {
+                                                "Fn::ImportValue": "shared-rds-instance-endpoint"
+                                            },
+                                            "DBName": {
+                                                "Fn::ImportValue": "shared-rds-database-name"
+                                            },
+                                            "DBUser": {
+                                                "Fn::ImportValue": "shared-rds-root-user"
+                                            },
+                                            "DBPassword": {
+                                                "Fn::ImportValue": "shared-rds-root-password"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "05_setup_cron": {
+                                "cwd": "/etc",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": {
+                                    "Fn::Sub": [
+                                        "echo \"*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/\" >> crontab",
+                                        {
+                                            "S3Bucket": {
+                                                "Fn::ImportValue": "shared-bucket"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "07_clean_up": {
+                                "cwd": "/var/www/html",
+                                "command": "rm -rf wordpress\nrm -f wp-config-sample.php\n"
                             }
                         }
                     }

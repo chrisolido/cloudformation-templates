@@ -3,7 +3,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: "Networking Environment Configuration"
+          default: Networking Environment Configuration
         Parameters:
           - VPCCidr
           - PrivateSubnetCidr1
@@ -11,7 +11,7 @@ Metadata:
           - PublicSubnetCidr1
           - PublicSubnetCidr2
       - Label:
-          default: "Database Configuration"
+          default: Database Configuration
         Parameters:
           - DatabaseName
           - DatabaseUser
@@ -111,37 +111,37 @@ Mappings:
       Size: "40"
 Resources:
   VPC:
-    Type: "AWS::EC2::VPC"
+    Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref VPCCidr
   IGW:
-    Type: "AWS::EC2::InternetGateway"
+    Type: AWS::EC2::InternetGateway
   GatewayAttach:
-    Type: "AWS::EC2::VPCGatewayAttachment"
+    Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       InternetGatewayId: !Ref IGW
       VpcId: !Ref VPC
   PrivateSubnet1:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: !Ref PrivateSubnetCidr1
       MapPublicIpOnLaunch: false
       VpcId: !Ref VPC
   PrivateSubnetRouteTableAssociation1:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet1
   PrivateSubnet2:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs ]
       CidrBlock: !Ref PrivateSubnetCidr2
       MapPublicIpOnLaunch: false
       VpcId: !Ref VPC
   PrivateSubnetRouteTableAssociation2:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet2
@@ -150,38 +150,38 @@ Resources:
     Properties:
       VpcId: !Ref VPC
   PublicSubnet1:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
       CidrBlock: !Ref PublicSubnetCidr1
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
   PublicSubnetRouteTableAssociation1:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
   PublicSubnet2:
-    Type: "AWS::EC2::Subnet"
+    Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs ]
       CidrBlock: !Ref PublicSubnetCidr2
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
   PublicSubnetRouteTableAssociation2:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
   PublicRoute:
-    Type: "AWS::EC2::Route"
+    Type: AWS::EC2::Route
     DependsOn: GatewayAttach
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref IGW
       RouteTableId: !Ref PublicRouteTable
   PublicRouteTable:
-    Type: "AWS::EC2::RouteTable"
+    Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
   SharedRDSInstance:
@@ -200,7 +200,7 @@ Resources:
       VPCSecurityGroups:
         - !Ref RDSSecurityGroup
   RDSSubnetGroup:
-    Type: "AWS::RDS::DBSubnetGroup"
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: RDS Subnet Group
       SubnetIds:
@@ -218,20 +218,20 @@ Resources:
           CidrIp: !Ref VPCCidr
   SharedBucket:
     DeletionPolicy: Retain
-    Type: "AWS::S3::Bucket"
+    Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
       WebsiteConfiguration:
         ErrorDocument: index.html
         IndexDocument: index.html
   SharedBucketPolicy:
-    Type: "AWS::S3::BucketPolicy"
+    Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref SharedBucket
       PolicyDocument:
         Statement:
           - Action:
-              - "s3:GetObject"
+              - s3:GetObject
             Effect: Allow
             Resource: !Join ["", ["arn:aws:s3:::", !Ref SharedBucket, "/*"]]
             Principal:

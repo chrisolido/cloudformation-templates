@@ -181,9 +181,6 @@ Resources:
         - !Ref TargetGroup
   EC2LaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
-    CreationPolicy:
-      ResourceSignal:
-        Timeout: PT5M
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX]
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
@@ -196,23 +193,23 @@ Resources:
           !Sub |
             #!/bin/bash
             yum update -y
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets www --region ${AWS::Region}
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
     Metadata:
       AWS::CloudFormation::Init:
         configSets:
-          www:
-            - "configure_cfn"
-            - "install_www"
-            - "config_app"
+          wordpress:
+            - configure_cfn
+            - install_wordpress
+            - config_wordpress
         configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
-                path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2Instance --configsets www --region ${AWS::Region}
+                path=Resources.EC2LaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2LaunchConfiguration --configsets wordpress --region ${AWS::Region}
               mode: "000400"
               owner: root
               group: root
@@ -227,36 +224,80 @@ Resources:
               owner: root
               group: root
           services:
+            # redirected to systemd
             sysvinit:
               cfn-hup:
-                enabled: "true"
-                ensureRunning: "true"
+                enabled: true
+                ensureRunning: true
                 files:
-                  - "/etc/cfn/cfn-hup.conf"
-                  - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-        install_www:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        install_wordpress:
           packages:
             yum:
               httpd: []
               php: []
+              php-mysqlnd: []
+              mariadb: []
+          sources:
+            /var/www/html: http://wordpress.org/latest.tar.gz
           services:
+            # redirected to systemd
             sysvinit:
               httpd:
-                enabled: "true"
-                ensureRunning: "true"
-        config_app:
-          sources:
-            /var/www/html: !Join ["", [!ImportValue shared-bucket-url, "/App-", !Ref AppVersion, ".zip"]]
-          files:
-            /var/www/html/test.pattern.zip:
-              source: !Join ["", [!ImportValue shared-bucket-url, "/Test-", !Ref AppVersion, ".zip"]]
-              mode: "000644"
-              owner: "root"
-              group: "root"
+                enabled: true
+                ensureRunning: true
+                files :
+                  - /etc/httpd/conf/httpd.conf
+        config_wordpress:
           commands:
-            unzippattern:
-              cwd: "/var/www/html"
-              command: "unzip -o test.pattern.zip"
+            00_sync:
+              # for new instances
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: !Sub
+                - aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html
+                - S3Bucket: !ImportValue shared-bucket
+            01_copy_to_root:
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp -r wordpress/* /var/www/html
+            02_clone_wp_config:
+              cwd: /var/www/html
+              test: test ! -e /var/www/html/wp-config.php
+              command: cp wp-config-sample.php wp-config.php
+            03_direct_ftp_config:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
+              command: |
+                echo "define('FS_METHOD', 'direct');" >> wp-config.php
+                chmod -R 755 wp-content
+                chown -R apache:apache wp-content
+            04_database_config:
+              cwd: /var/www/html
+              test: test -e /var/www/html/wp-config-sample.php
+              command: !Sub
+                - |
+                  sed -i 's/localhost/${DBEndpoint}/g' wp-config.php
+                  sed -i 's/database_name_here/${DBName}/g' wp-config.php
+                  sed -i 's/username_here/${DBUser}/g' wp-config.php
+                  sed -i 's/password_here/${DBPassword}/g' wp-config.php
+                - DBEndpoint: !ImportValue shared-rds-instance-endpoint
+                  DBName: !ImportValue shared-rds-database-name
+                  DBUser: !ImportValue shared-rds-root-user
+                  DBPassword: !ImportValue shared-rds-root-password
+            05_setup_cron:
+              cwd: /etc
+              test: test -e /var/www/html/wp-config-sample.php
+              command: !Sub
+                - echo "*/10  *  *  *  * root aws s3 sync --delete /var/www/html s3://${S3Bucket}/${AWS::StackName}/" >> crontab
+                - S3Bucket: !ImportValue shared-bucket
+            07_clean_up:
+              # this prevents init commands to be re-run
+              cwd: /var/www/html
+              command: |
+                rm -rf wordpress
+                rm -f wp-config-sample.php
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
