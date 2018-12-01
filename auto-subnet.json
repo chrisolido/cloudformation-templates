@@ -4,9 +4,6 @@
         "S3Bucket": {
             "Type": "String",
             "Description": "Specify the S3 Bucket containing custom-resources.zip",
-            "Default": {
-                "Fn::ImportValue": "wp-backup-bucket"
-            },
             "MinLength": 3,
             "MaxLength": 63,
             "AllowedPattern": "[a-z0-9][a-z0-9\\.-]*"
