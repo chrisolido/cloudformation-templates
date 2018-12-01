@@ -109,7 +109,7 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           CidrIp: !ImportValue shared-vpc-cidr
-  # this is necessary for Lambda to call custom resource s3 endpoint
+  # this is necessary for Lambda in VPC to call custom resource s3 endpoint
   VpcEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
