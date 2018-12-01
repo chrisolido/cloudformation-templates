@@ -109,6 +109,22 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           CidrIp: !ImportValue shared-vpc-cidr
+  VpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action: '*'
+            Resource: '*'
+            Principal: '*'
+      RouteTableIds: !ImportValue shared-vpc-private-rt
+      ServiceName: !Sub
+          - com.amazonaws.{Region}.s3
+          -
+            Region: !Ref 'AWS::Region'
+      VpcId: !ImportValue shared-vpc-id
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:

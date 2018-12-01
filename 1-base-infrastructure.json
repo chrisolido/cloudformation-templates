@@ -282,6 +282,15 @@
                 "Name": "shared-vpc-private-subnet2"
             }
         },
+        "PrivateRouteTable": {
+            "Description": "ID of Private Route Table",
+            "Value": {
+                "Ref": "PrivateRouteTable"
+            },
+            "Export": {
+                "Name": "shared-vpc-private-rt"
+            }
+        },
         "ReservedRange1": {
             "Description": "CIDR Range of Shared Private Subnet 1",
             "Value": {

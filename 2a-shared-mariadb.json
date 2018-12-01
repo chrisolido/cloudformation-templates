@@ -230,6 +230,37 @@
                 ]
             }
         },
+        "VpcEndpoint": {
+            "Type": "AWS::EC2::VPCEndpoint",
+            "Properties": {
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "*",
+                            "Resource": "*",
+                            "Principal": "*"
+                        }
+                    ]
+                },
+                "RouteTableIds": {
+                    "Fn::ImportValue": "shared-vpc-private-rt"
+                },
+                "ServiceName": {
+                    "Fn::Sub": [
+                        "com.amazonaws.{Region}.s3",
+                        {
+                            "Region": {
+                                "Ref": "AWS::Region"
+                            }
+                        }
+                    ]
+                },
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                }
+            }
+        },
         "LambdaRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -271,6 +302,17 @@
                             ],
                             "Resource": [
                                 "arn:aws:logs:*:*:*"
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ec2:DescribeNetworkInterfaces",
+                                "ec2:CreateNetworkInterface",
+                                "ec2:DeleteNetworkInterface"
+                            ],
+                            "Resource": [
+                                "*"
                             ]
                         }
                     ]
@@ -314,6 +356,24 @@
                             "Ref": "DatabasePassword"
                         }
                     }
+                },
+                "VpcConfig": {
+                    "SecurityGroupIds": [
+                        {
+                            "Fn::GetAtt": [
+                                "DBSecurityGroup",
+                                "GroupId"
+                            ]
+                        }
+                    ],
+                    "SubnetIds": [
+                        {
+                            "Fn::ImportValue": "shared-vpc-private-subnet1"
+                        },
+                        {
+                            "Fn::ImportValue": "shared-vpc-private-subnet2"
+                        }
+                    ]
                 }
             }
         }
