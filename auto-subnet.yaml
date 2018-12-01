@@ -94,6 +94,3 @@ Outputs:
     Value: !GetAtt AutoSubnetLambda.Arn
     Export:
       Name: auto-subnet-lambda-arn
-  AutoSubnetDynamoDBTable:
-    Description: Table Name of auto-subnet DynamoDB Table
-    Value: !Ref DynamoDBTable

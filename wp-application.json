@@ -149,6 +149,14 @@
         }
     },
     "Resources": {
+        "AutoSubnetCustomResource": {
+            "Type": "Custom::LambdaAutoSubnet",
+            "Properties": {
+                "ServiceToken": {
+                    "Fn::ImportValue": "auto-subnet-lambda-arn"
+                }
+            }
+        },
         "PublicSubnet1": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
@@ -161,7 +169,10 @@
                     ]
                 },
                 "CidrBlock": {
-                    "Ref": "AppPublicCIDR1"
+                    "Fn::GetAtt": [
+                        "AutoSubnetCustomResource",
+                        "AppPublicCIDR1"
+                    ]
                 },
                 "MapPublicIpOnLaunch": true,
                 "VpcId": {
@@ -181,7 +192,10 @@
                     ]
                 },
                 "CidrBlock": {
-                    "Ref": "AppPublicCIDR2"
+                    "Fn::GetAtt": [
+                        "AutoSubnetCustomResource",
+                        "AppPublicCIDR2"
+                    ]
                 },
                 "MapPublicIpOnLaunch": true,
                 "VpcId": {

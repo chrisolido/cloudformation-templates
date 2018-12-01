@@ -24,7 +24,6 @@ def handler(event, context):
     """Allocate 3 IP ranges from a VPC CIDR Block"""
     print(f"Function ARN: {context.invoked_function_arn}")
     print(f"Event: {json.dumps(event)}")
-    print(f"Context: {json.dumps(context)}")
 
     stack_id = event['StackId']
     request_type = event['RequestType']
@@ -41,7 +40,7 @@ def handler(event, context):
     subnet_mask = 24
     subnets = ipnet.subnet(subnet_mask)
     subnets_allocated = 0
-    number_to_allocate = 3
+    number_to_allocate = 2
 
     for subnet in subnets:
         if subnets_allocated == number_to_allocate:
@@ -76,7 +75,6 @@ def handler(event, context):
         response_data = {
             'AppPublicCIDR1': response['Items'][0]['Cidr'],
             'AppPublicCIDR2': response['Items'][1]['Cidr'],
-            'AppPrivateCIDR': response['Items'][2]['Cidr'],
         }
         send_response(event, status='SUCCESS', data=response_data)
 
