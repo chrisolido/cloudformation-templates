@@ -8,6 +8,8 @@ Resources:
           AttributeType: "S"
         - AttributeName: "StackId"
           AttributeType: "S"
+        - AttributeName: "StackName"
+          AttributeType: "S"
       KeySchema:
         - AttributeName: "Cidr"
           KeyType: "HASH"
