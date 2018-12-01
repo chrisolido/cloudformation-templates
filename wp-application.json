@@ -264,6 +264,9 @@
         "TargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
+                "Matcher": {
+                    "HttpCode": "200-399"
+                },
                 "Port": 80,
                 "Protocol": "HTTP",
                 "VpcId": {
