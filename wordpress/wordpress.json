@@ -1,0 +1,498 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        "EnvironmentSize": {
+            "Type": "String",
+            "Default": "DEV",
+            "AllowedValues": [
+                "DEV",
+                "SMALL",
+                "MEDIUM",
+                "LARGE"
+            ],
+            "Description": "Select Environment Size (S,M,L)"
+        },
+        "DatabaseName": {
+            "Type": "String",
+            "Default": "wordpress",
+            "MinLength": 1,
+            "MaxLength": 64,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabaseUser": {
+            "Type": "String",
+            "Default": "admin",
+            "MinLength": 1,
+            "MaxLength": 16,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabasePassword": {
+            "Type": "String",
+            "Default": "wordpress",
+            "MinLength": 8,
+            "MaxLength": 41,
+            "AllowedPattern": "[a-zA-Z0-9~!#$%^&]*",
+            "NoEcho": true
+        },
+        "KeyPair": {
+            "Description": "Amazon EC2 Key Pair for SSH Access",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "SSHLocation": {
+            "Description": "The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+        "SnapshotToRestore": {
+            "Description": "Restore from existing RDS snapshot (not required)",
+            "Type": "String",
+            "Default": ""
+        }
+    },
+    "Conditions": {
+        "isRestore": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        }
+    },
+    "Mappings": {
+        "RegionMap": {
+            "us-east-1": {
+                "AMALINUX": "ami-013be31976ca2c322"
+            },
+            "us-east-2": {
+                "AMALINUX": "ami-0b59bfac6be064b78"
+            },
+            "us-west-1": {
+                "AMALINUX": "ami-01beb64058d271bc4"
+            },
+            "us-west-2": {
+                "AMALINUX": "ami-061e7ebbc234015fe"
+            },
+            "ca-central-1": {
+                "AMALINUX": "ami-076b4adb3f90cd384"
+            },
+            "eu-central-1": {
+                "AMALINUX": "ami-02ea8f348fa28c108"
+            },
+            "eu-west-1": {
+                "AMALINUX": "ami-0a5e707736615003c"
+            },
+            "eu-west-2": {
+                "AMALINUX": "ami-0274e11dced17bb5b"
+            },
+            "eu-west-3": {
+                "AMALINUX": "ami-051707cdba246187b"
+            },
+            "ap-northeast-1": {
+                "AMALINUX": "ami-0a2de1c3b415889d2"
+            },
+            "ap-northeast-2": {
+                "AMALINUX": "ami-0b4fdb56a00adb616"
+            },
+            "ap-south-1": {
+                "AMALINUX": "ami-06bcd1131b2f55803"
+            },
+            "ap-southeast-1": {
+                "AMALINUX": "ami-085fd1bd447be68e8"
+            },
+            "ap-southeast-2": {
+                "AMALINUX": "ami-0b8dea0e70b969adc"
+            },
+            "sa-east-1": {
+                "AMALINUX": "ami-0112d42866980b373"
+            }
+        },
+        "InstanceSize": {
+            "DEV": {
+                "EC2": "t2.micro",
+                "DB": "db.t2.micro"
+            },
+            "SMALL": {
+                "EC2": "t3.small",
+                "DB": "db.t2.small"
+            },
+            "MEDIUM": {
+                "EC2": "t3.medium",
+                "DB": "db.t2.medium"
+            },
+            "LARGE": {
+                "EC2": "m5.large",
+                "DB": "db.m5.large"
+            }
+        }
+    },
+    "Resources": {
+        "MariaDB": {
+            "Type": "AWS::RDS::DBInstance",
+            "DeletionPolicy": "Snapshot",
+            "Properties": {
+                "AllocatedStorage": "5",
+                "StorageType": "gp2",
+                "DBName": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseName"
+                        }
+                    ]
+                },
+                "Engine": "MariaDB",
+                "MasterUsername": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseUser"
+                        }
+                    ]
+                },
+                "MasterUserPassword": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabasePassword"
+                        }
+                    ]
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "DBInstanceClass": {
+                    "Fn::FindInMap": [
+                        "InstanceSize",
+                        {
+                            "Ref": "EnvironmentSize"
+                        },
+                        "DB"
+                    ]
+                },
+                "DBSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ]
+            }
+        },
+        "DBSecurityGroup": {
+            "Type": "AWS::RDS::DBSecurityGroup",
+            "Properties": {
+                "GroupDescription": "Database Security Group",
+                "DBSecurityGroupIngress": [
+                    {
+                        "EC2SecurityGroupName": {
+                            "Ref": "WPSecurityGroup"
+                        }
+                    }
+                ]
+            }
+        },
+        "WPInstance": {
+            "Type": "AWS::EC2::Instance",
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "RegionMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMALINUX"
+                    ]
+                },
+                "InstanceType": {
+                    "Fn::FindInMap": [
+                        "InstanceSize",
+                        {
+                            "Ref": "EnvironmentSize"
+                        },
+                        "EC2"
+                    ]
+                },
+                "IamInstanceProfile": {
+                    "Ref": "WPInstanceProfile"
+                },
+                "KeyName": {
+                    "Ref": "KeyPair"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "WPSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPInstance --configsets wordpress --region ${AWS::Region}\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WPInstance --region ${AWS::Region}\n"
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT5M"
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "wordpress": [
+                            "configure_cfn",
+                            "install_wordpress",
+                            "config_wordpress"
+                        ]
+                    },
+                    "configure_cfn": {
+                        "files": {
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.WPInstance.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WPInstance --configsets wordpress --region ${AWS::Region}\n"
+                                },
+                                "mode": 256,
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": {
+                                    "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\nverbose=true\ninterval=5\n"
+                                },
+                                "mode": 256,
+                                "owner": "root",
+                                "group": "root"
+                            }
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": true,
+                                    "ensureRunning": true,
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "install_wordpress": {
+                        "packages": {
+                            "yum": {
+                                "httpd": [],
+                                "php": [],
+                                "php-mysqlnd": [],
+                                "mariadb": []
+                            }
+                        },
+                        "sources": {
+                            "/var/www/html": "http://wordpress.org/latest.tar.gz"
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "httpd": {
+                                    "enabled": true,
+                                    "ensureRunning": true,
+                                    "files": [
+                                        "/etc/httpd/conf/httpd.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "config_wordpress": {
+                        "commands": {
+                            "00_sync": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": {
+                                    "Fn::Sub": "aws s3 sync s3://${WPBackupBucket} /var/www/html"
+                                }
+                            },
+                            "01_copy_to_root": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp -r wordpress/* /var/www/html"
+                            },
+                            "02_clone_wp_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test ! -e /var/www/html/wp-config.php",
+                                "command": "cp wp-config-sample.php wp-config.php"
+                            },
+                            "03_direct_ftp_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": "echo \"define('FS_METHOD', 'direct');\" >> wp-config.php\nchmod -R 755 wp-content\nchown -R apache:apache wp-content\n"
+                            },
+                            "04_database_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": {
+                                    "Fn::Sub": "sed -i 's/localhost/${MariaDB.Endpoint.Address}/g' wp-config.php\nsed -i 's/database_name_here/${DatabaseName}/g' wp-config.php\nsed -i 's/username_here/${DatabaseUser}/g' wp-config.php\nsed -i 's/password_here/${DatabasePassword}/g' wp-config.php\n"
+                                }
+                            },
+                            "05_wp_url_config": {
+                                "cwd": "/var/www/html",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": "URL=$(curl http://169.254.169.254/latest/meta-data/public-hostname)\n# update url in WP config\necho \"define('WP_SITEURL', 'http://$URL');\" >> wp-config.php\necho \"define('WP_HOME', 'http://$URL');\" >> wp-config.php\n# update url in WP theme\necho \"update_option('siteurl','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\necho \"update_option('home','http://$URL');\" >> wp-content/themes/twentyseventeen/functions.php\n"
+                            },
+                            "06_setup_cron": {
+                                "cwd": "/etc",
+                                "test": "test -e /var/www/html/wp-config-sample.php",
+                                "command": {
+                                    "Fn::Sub": "echo \"*/30  *  *  *  * root aws s3 sync --delete /var/www/html s3://${WPBackupBucket}\" >> crontab\n"
+                                }
+                            },
+                            "07_clean_up": {
+                                "cwd": "/var/www/html",
+                                "command": "rm -rf wordpress\nrm -f wp-config-sample.php\n"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "WPSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Open Ports 22 and 80",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": {
+                            "Ref": "SSHLocation"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "WPSyncS3Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "EC2SyncS3Bucket",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "s3:DeleteObject",
+                                        "s3:ListBucket",
+                                        "s3:GetObject",
+                                        "s3:GetBucketLocation",
+                                        "s3:PutObject",
+                                        "s3:PutObjectAcl"
+                                    ],
+                                    "Resource": [
+                                        {
+                                            "Fn::Sub": "${WPBackupBucket.Arn}"
+                                        },
+                                        {
+                                            "Fn::Sub": "${WPBackupBucket.Arn}/*"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "WPInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "WPSyncS3Role"
+                    }
+                ]
+            }
+        },
+        "WPBackupBucket": {
+            "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "NoncurrentVersionExpirationInDays": 60,
+                            "NoncurrentVersionTransitions": [
+                                {
+                                    "StorageClass": "STANDARD_IA",
+                                    "TransitionInDays": 30
+                                }
+                            ],
+                            "Status": "Enabled"
+                        }
+                    ]
+                },
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "Website": {
+            "Description": "The Public URL for the Wordpress Server",
+            "Value": {
+                "Fn::Sub": "http://${WPInstance.PublicDnsName}"
+            }
+        }
+    }
+}
