@@ -230,7 +230,7 @@
                 ]
             }
         },
-        "IAMRole": {
+        "LambdaRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {
@@ -252,13 +252,13 @@
                 "Path": "/"
             }
         },
-        "IAMPolicy": {
+        "LambdaPolicy": {
             "Type": "AWS::IAM::Policy",
             "Properties": {
                 "PolicyName": "auto-database-policy",
                 "Roles": [
                     {
-                        "Ref": "IAMRole"
+                        "Ref": "LambdaRole"
                     }
                 ],
                 "PolicyDocument": {
@@ -282,7 +282,7 @@
             "Properties": {
                 "Role": {
                     "Fn::GetAtt": [
-                        "IAMRole",
+                        "LambdaRole",
                         "Arn"
                     ]
                 },

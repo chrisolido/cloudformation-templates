@@ -44,7 +44,7 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
-  IAMRole:
+  LambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -58,12 +58,12 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: "/"
-  IAMPolicy:
+  LambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: auto-subnet-policy
       Roles:
-        - !Ref IAMRole
+        - !Ref LambdaRole
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -83,7 +83,7 @@ Resources:
   AutoSubnetLambda:
     Type: AWS::Lambda::Function
     Properties:
-      Role: !GetAtt IAMRole.Arn
+      Role: !GetAtt LambdaRole.Arn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: custom-resources.zip

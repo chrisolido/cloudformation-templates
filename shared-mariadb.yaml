@@ -109,7 +109,7 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           CidrIp: !ImportValue shared-vpc-cidr
-  IAMRole:
+  LambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -123,12 +123,12 @@ Resources:
             Action:
               - sts:AssumeRole
       Path: "/"
-  IAMPolicy:
+  LambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: auto-database-policy
       Roles:
-        - !Ref IAMRole
+        - !Ref LambdaRole
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -141,7 +141,7 @@ Resources:
   AutoDatabaseLambda:
     Type: AWS::Lambda::Function
     Properties:
-      Role: !GetAtt IAMRole.Arn
+      Role: !GetAtt LambdaRole.Arn
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: custom-resources.zip
