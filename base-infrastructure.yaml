@@ -8,8 +8,6 @@ Metadata:
           - VPCCidr
           - PrivateSubnetCidr1
           - PrivateSubnetCidr2
-          - PublicSubnetCidr1
-          - PublicSubnetCidr2
       - Label:
           default: Database Configuration
         Parameters:
@@ -133,18 +131,6 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      AvailabilityZone: !Select [0, !GetAZs ]
-      CidrBlock: !Ref PublicSubnetCidr1
-      MapPublicIpOnLaunch: true
-      VpcId: !Ref VPC
-  PublicSubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref PublicSubnet1
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: GatewayAttach
