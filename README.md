@@ -12,7 +12,7 @@ Custom options include SSH CIDR IP range, instance size, and EC2 SSH key-pair.
 
 Deploy a Virtual Private Cloud to host multiple scalable and fault tolerant Wordpress applications. Automatically create database and subnets for multiple Wordpress installations, at scale. Centralized MariaDB instance to maximize cost efficiency, and multiple size Wordpress applications available.
 
-Can be used in multiple AWS regions.
+Can be used in multiple AWS regions. Multiple servers synced using AWS EFS.
 
 ### Setup
 

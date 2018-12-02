@@ -166,6 +166,9 @@ Resources:
       VpcId: !ImportValue shared-vpc-id
   WPAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn:
+      - WPEFSMount1
+      - WPEFSMount2
     CreationPolicy:
       ResourceSignal:
         Count: !Ref DesiredCapacity
@@ -207,8 +210,9 @@ Resources:
         configSets:
           wordpress:
             - configure_cfn
+            - install_lamp
+            - mount_efs
             - install_wordpress
-            - config_wordpress
         configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
@@ -239,15 +243,13 @@ Resources:
                 files:
                   - /etc/cfn/cfn-hup.conf
                   - /etc/cfn/hooks.d/cfn-auto-reloader.conf
-        install_wordpress:
+        install_lamp:
           packages:
             yum:
               httpd: []
               php: []
               php-mysqlnd: []
               mariadb: []
-          sources:
-            /var/www/html: http://wordpress.org/latest.tar.gz
           services:
             # redirected to systemd
             sysvinit:
@@ -256,19 +258,24 @@ Resources:
                 ensureRunning: true
                 files :
                   - /etc/httpd/conf/httpd.conf
-        config_wordpress:
+        mount_efs:
           commands:
-            00_sync:
-              # for new instances
+            mount_filesystem:
               cwd: /var/www/html
               test: test ! -e /var/www/html/wp-config.php
               command: !Sub
-                - aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html
-                - S3Bucket: !ImportValue wp-backup-bucket
-            01_copy_to_root:
+                - mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${EFS}.efs.${AWS::Region}.amazonaws.com:/ /var/www/html
+                -
+                  EFS: !Ref WPFileSystem
+        install_wordpress:
+          commands:
+            01_download_files:
               cwd: /var/www/html
               test: test ! -e /var/www/html/wp-config.php
-              command: cp -r wordpress/* /var/www/html
+              command: |
+                wget https://wordpress.org/latest.tar.gz
+                tar -xzf latest.tar.gz
+                cp -r wordpress/* /var/www/html
             02_clone_wp_config:
               cwd: /var/www/html
               test: test ! -e /var/www/html/wp-config.php
@@ -305,6 +312,7 @@ Resources:
               cwd: /var/www/html
               command: |
                 rm -rf wordpress
+                rm -f latest.tar.gz
                 rm -f wp-config-sample.php
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -328,6 +336,12 @@ Resources:
           ToPort: 22
           FromPort: 22
           CidrIp: !Ref SSHLocation
+        # port 2049 is for EFS
+        -
+          IpProtocol: tcp
+          ToPort: 2049
+          FromPort: 2049
+          CidrIp: !ImportValue shared-vpc-cidr
   WPInboundRule: # EC2 can only accept HTTP traffic from ALB
     Type: AWS::EC2::SecurityGroupIngress
     Properties:

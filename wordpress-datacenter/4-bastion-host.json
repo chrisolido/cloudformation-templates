@@ -183,7 +183,7 @@
         }
     },
     "Outputs": {
-        "BastionIP": {
+        "BastionHost": {
             "Description": "The Public IP for the Bastion Server",
             "Value": {
                 "Fn::GetAtt": [

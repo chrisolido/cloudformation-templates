@@ -61,7 +61,7 @@ def create_database(event, stack_name):
         password = str(uuid4()).replace('-', '')
         # using stack_name prevents against SQL injections
         # as it only allows alphanumerical characters and "-"
-        # and the commands fails with %s param substitution because of single quotes
+        # and the commands fail with %s param substitution because of single quotes
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {stack_name}")
         cursor.execute(
             "INSERT INTO mysql.user (User,Host,authentication_string,ssl_cipher,x509_issuer, x509_subject) VALUES(%s, %s, PASSWORD(%s),'','','')",
@@ -96,7 +96,7 @@ def delete_database(event, stack_name):
         vpc_mask = os.environ['VPC_CIDR'][:-2] + "255.255.0.0"
         # using stack_name prevents against SQL injections
         # as it only allows alphanumerical characters and "-"
-        # and the commands fails with %s param substitution because of single quotes
+        # and the commands fail with %s param substitution because of single quotes
         cursor.execute(f"DROP DATABASE IF EXISTS {stack_name}")
         cursor.execute("DROP USER IF EXISTS %s@%s", (stack_name, vpc_mask))
         mariadb_connection.commit()

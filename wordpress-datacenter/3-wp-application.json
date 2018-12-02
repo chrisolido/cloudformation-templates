@@ -300,6 +300,10 @@
         },
         "WPAutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "DependsOn": [
+                "WPEFSMount1",
+                "WPEFSMount2"
+            ],
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Count": {
@@ -400,8 +404,9 @@
                     "configSets": {
                         "wordpress": [
                             "configure_cfn",
-                            "install_wordpress",
-                            "config_wordpress"
+                            "install_lamp",
+                            "mount_efs",
+                            "install_wordpress"
                         ]
                     },
                     "configure_cfn": {
@@ -436,7 +441,7 @@
                             }
                         }
                     },
-                    "install_wordpress": {
+                    "install_lamp": {
                         "packages": {
                             "yum": {
                                 "httpd": [],
@@ -444,9 +449,6 @@
                                 "php-mysqlnd": [],
                                 "mariadb": []
                             }
-                        },
-                        "sources": {
-                            "/var/www/html": "http://wordpress.org/latest.tar.gz"
                         },
                         "services": {
                             "sysvinit": {
@@ -460,26 +462,30 @@
                             }
                         }
                     },
-                    "config_wordpress": {
+                    "mount_efs": {
                         "commands": {
-                            "00_sync": {
+                            "mount_filesystem": {
                                 "cwd": "/var/www/html",
                                 "test": "test ! -e /var/www/html/wp-config.php",
                                 "command": {
                                     "Fn::Sub": [
-                                        "aws s3 sync s3://${S3Bucket}/${AWS::StackName}/ /var/www/html",
+                                        "mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${EFS}.efs.${AWS::Region}.amazonaws.com:/ /var/www/html",
                                         {
-                                            "S3Bucket": {
-                                                "Fn::ImportValue": "wp-backup-bucket"
+                                            "EFS": {
+                                                "Ref": "WPFileSystem"
                                             }
                                         }
                                     ]
                                 }
-                            },
-                            "01_copy_to_root": {
+                            }
+                        }
+                    },
+                    "install_wordpress": {
+                        "commands": {
+                            "01_download_files": {
                                 "cwd": "/var/www/html",
                                 "test": "test ! -e /var/www/html/wp-config.php",
-                                "command": "cp -r wordpress/* /var/www/html"
+                                "command": "wget https://wordpress.org/latest.tar.gz\ntar -xzf latest.tar.gz\ncp -r wordpress/* /var/www/html\n"
                             },
                             "02_clone_wp_config": {
                                 "cwd": "/var/www/html",
@@ -542,7 +548,7 @@
                             },
                             "07_clean_up": {
                                 "cwd": "/var/www/html",
-                                "command": "rm -rf wordpress\nrm -f wp-config-sample.php\n"
+                                "command": "rm -rf wordpress\nrm -f latest.tar.gz\nrm -f wp-config-sample.php\n"
                             }
                         }
                     }
@@ -594,6 +600,14 @@
                         "FromPort": 22,
                         "CidrIp": {
                             "Ref": "SSHLocation"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "ToPort": 2049,
+                        "FromPort": 2049,
+                        "CidrIp": {
+                            "Fn::ImportValue": "shared-vpc-cidr"
                         }
                     }
                 ]
