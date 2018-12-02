@@ -1,0 +1,196 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Bastion Host Configuration"
+                    },
+                    "Parameters": [
+                        "KeyPair",
+                        "SSHLocation"
+                    ]
+                }
+            ]
+        }
+    },
+    "Parameters": {
+        "KeyPair": {
+            "Description": "Amazon EC2 Key Pair for SSH Access",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "SSHLocation": {
+            "Description": "The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+        }
+    },
+    "Mappings": {
+        "RegionMap": {
+            "us-east-1": {
+                "AMALINUX": "ami-013be31976ca2c322"
+            },
+            "us-east-2": {
+                "AMALINUX": "ami-0b59bfac6be064b78"
+            },
+            "us-west-1": {
+                "AMALINUX": "ami-01beb64058d271bc4"
+            },
+            "us-west-2": {
+                "AMALINUX": "ami-061e7ebbc234015fe"
+            },
+            "ca-central-1": {
+                "AMALINUX": "ami-076b4adb3f90cd384"
+            },
+            "eu-central-1": {
+                "AMALINUX": "ami-02ea8f348fa28c108"
+            },
+            "eu-west-1": {
+                "AMALINUX": "ami-0a5e707736615003c"
+            },
+            "eu-west-2": {
+                "AMALINUX": "ami-0274e11dced17bb5b"
+            },
+            "eu-west-3": {
+                "AMALINUX": "ami-051707cdba246187b"
+            },
+            "ap-northeast-1": {
+                "AMALINUX": "ami-0a2de1c3b415889d2"
+            },
+            "ap-northeast-2": {
+                "AMALINUX": "ami-0b4fdb56a00adb616"
+            },
+            "ap-south-1": {
+                "AMALINUX": "ami-06bcd1131b2f55803"
+            },
+            "ap-southeast-1": {
+                "AMALINUX": "ami-085fd1bd447be68e8"
+            },
+            "ap-southeast-2": {
+                "AMALINUX": "ami-0b8dea0e70b969adc"
+            },
+            "sa-east-1": {
+                "AMALINUX": "ami-0112d42866980b373"
+            }
+        }
+    },
+    "Resources": {
+        "AutoSubnetCustomResource": {
+            "Type": "Custom::LambdaAutoSubnet",
+            "Properties": {
+                "ServiceToken": {
+                    "Fn::ImportValue": "auto-subnet-lambda-arn"
+                }
+            }
+        },
+        "PublicSubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        0,
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                },
+                "CidrBlock": {
+                    "Fn::GetAtt": [
+                        "AutoSubnetCustomResource",
+                        "AppPublicCIDR1"
+                    ]
+                },
+                "MapPublicIpOnLaunch": true,
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                }
+            }
+        },
+        "SubnetRouteTableAssociatePublic": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Fn::ImportValue": "shared-vpc-public-rt"
+                },
+                "SubnetId": {
+                    "Ref": "PublicSubnet"
+                }
+            }
+        },
+        "BastionInstance": {
+            "Type": "AWS::EC2::Instance",
+            "DeletionPolicy": "Delete",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet"
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "RegionMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMALINUX"
+                    ]
+                },
+                "InstanceType": "t2.micro",
+                "KeyName": {
+                    "Ref": "KeyPair"
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Fn::GetAtt": [
+                            "BastionSecurityGroup",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource BastionInstance --region ${AWS::Region}\n"
+                    }
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT5M"
+                }
+            }
+        },
+        "BastionSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Opens Port 22",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": {
+                            "Ref": "SSHLocation"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "BastionIP": {
+            "Description": "The Public IP for the Bastion Server",
+            "Value": {
+                "Fn::GetAtt": [
+                    "BastionInstance",
+                    "PublicIp"
+                ]
+            }
+        }
+    }
+}
