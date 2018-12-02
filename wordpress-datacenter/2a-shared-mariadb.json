@@ -8,7 +8,6 @@
                         "default": "RDS Database Configuration"
                     },
                     "Parameters": [
-                        "DatabaseName",
                         "DatabaseUser",
                         "DatabasePassword",
                         "DatabaseSize",
@@ -27,13 +26,6 @@
         }
     },
     "Parameters": {
-        "DatabaseName": {
-            "Type": "String",
-            "Default": "wordpress",
-            "MinLength": 1,
-            "MaxLength": 64,
-            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
-        },
         "DatabaseUser": {
             "Type": "String",
             "Default": "admin",
@@ -137,9 +129,6 @@
                 "Engine": "MariaDB",
                 "DBSubnetGroupName": {
                     "Ref": "DBSubnetGroup"
-                },
-                "DBName": {
-                    "Ref": "DatabaseName"
                 },
                 "MultiAZ": {
                     "Fn::If": [
@@ -342,14 +331,14 @@
                                 "Endpoint.Address"
                             ]
                         },
-                        "DB_NAME": {
-                            "Ref": "DatabaseName"
-                        },
                         "DB_USER": {
                             "Ref": "DatabaseUser"
                         },
                         "DB_PASSWORD": {
                             "Ref": "DatabasePassword"
+                        },
+                        "VPC_CIDR": {
+                            "Fn::ImportValue": "shared-vpc-cidr"
                         }
                     }
                 },

@@ -137,6 +137,9 @@
             "Properties": {
                 "ServiceToken": {
                     "Fn::ImportValue": "auto-database-lambda-arn"
+                },
+                "StackName": {
+                    "Ref": "AWS::StackName"
                 }
             }
         },
