@@ -39,11 +39,11 @@ Parameters:
     Default: "1"
   MaxSize:
     Type: String
-    Description: Minimum number of EC2 instances (Desired x 2)
+    Description: Maximum number of EC2 instances
     Default: "2"
   DesiredCapacity:
     Type: String
-    Description: Desired number of EC2 instances
+    Description: "NOTE: ALWAYS START WITH 1, then adjust after"
     Default: "1"
 Mappings:
   RegionMap:
