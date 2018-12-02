@@ -6,7 +6,6 @@ Metadata:
         Label:
           default: RDS Database Configuration
         Parameters:
-          - DatabaseName
           - DatabaseUser
           - DatabasePassword
           - DatabaseSize
@@ -17,12 +16,6 @@ Metadata:
         Parameters:
           - S3Bucket
 Parameters:
-  DatabaseName:
-    Type: String
-    Default: wordpress
-    MinLength: 1
-    MaxLength: 64
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*"
   DatabaseUser:
     Type: String
     Default: admin
@@ -83,7 +76,6 @@ Resources:
       BackupRetentionPeriod: "7"
       Engine: MariaDB
       DBSubnetGroupName: !Ref DBSubnetGroup
-      DBName: !Ref DatabaseName
       MultiAZ: !If [isProduction, true, false]
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
       MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
@@ -176,9 +168,9 @@ Resources:
       Environment:
         Variables:
           DB_ENDPOINT: !GetAtt SharedMariaDB.Endpoint.Address
-          DB_NAME: !Ref DatabaseName
           DB_USER: !Ref DatabaseUser
           DB_PASSWORD: !Ref DatabasePassword
+          VPC_CIDR: !ImportValue shared-vpc-cidr
       VpcConfig:
         SecurityGroupIds:
           - !GetAtt DBSecurityGroup.GroupId

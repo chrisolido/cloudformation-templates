@@ -95,6 +95,7 @@ Resources:
     Type: Custom::LambdaAutoDatabase
     Properties:
       ServiceToken: !ImportValue auto-database-lambda-arn
+      StackName: !Ref AWS::StackName
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
