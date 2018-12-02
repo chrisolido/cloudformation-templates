@@ -13,11 +13,12 @@ import requests
 import mysql.connector as mariadb
 
 config = {
-  'user': os.environ['DB_USER'],
-  'password': os.environ['DB_PASSWORD'],
-  'host': os.environ['DB_ENDPOINT'],
-  'use_pure': True
+    'user': os.environ['DB_USER'],
+    'password': os.environ['DB_PASSWORD'],
+    'host': os.environ['DB_ENDPOINT'],
+    'use_pure': True
 }
+
 
 def handler(event, context):
     """Manages databases and users for Wordpress application in MariaDB"""
@@ -30,7 +31,8 @@ def handler(event, context):
         cursor = mariadb_connection.cursor()
     except mariadb.Error as err:
         print(f"Error: {err}")
-        send_response(event, status='FAILED', reason="Error connecting to database")
+        send_response(
+            event, status='FAILED', reason="Error connecting to database")
 
     try:
         request_type = event['RequestType']
@@ -42,9 +44,8 @@ def handler(event, context):
             print('Deleting database and user...')
             return delete_database(event, stack_name)
         # otherwise create database and user for this stack
-        else:
-            print('Creating database and user...')
-            return create_database(event, stack_name)
+        print('Creating database and user...')
+        return create_database(event, stack_name)
 
     except KeyError as err:
         print(f"Error: {err}")
@@ -54,7 +55,7 @@ def handler(event, context):
 
 
 def create_database(event, stack_name):
-    """Create new database and user for Wordpress application in MariaDB"""
+    """Create new database and user for Wordpress application"""
     try:
         vpc_mask = os.environ['VPC_CIDR'][:-2] + "255.255.0.0"
         password = str(uuid4()).replace('-', '')
@@ -62,9 +63,13 @@ def create_database(event, stack_name):
         # as it only allows alphanumerical characters and "-"
         # and the commands fails with %s param substitution because of single quotes
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {stack_name}")
-        cursor.execute("INSERT INTO mysql.user (User,Host,authentication_string,ssl_cipher,x509_issuer, x509_subject) VALUES(%s, %s, PASSWORD(%s),'','','')", (stack_name, vpc_mask, password))
+        cursor.execute(
+            "INSERT INTO mysql.user (User,Host,authentication_string,ssl_cipher,x509_issuer, x509_subject) VALUES(%s, %s, PASSWORD(%s),'','','')",
+            (stack_name, vpc_mask, password))
         cursor.execute("FLUSH PRIVILEGES")
-        cursor.execute(f"GRANT ALL PRIVILEGES ON {stack_name}.* TO %s@%s IDENTIFIED BY %s", (stack_name, vpc_mask, password))
+        cursor.execute(
+            f"GRANT ALL PRIVILEGES ON {stack_name}.* TO %s@%s IDENTIFIED BY %s",
+            (stack_name, vpc_mask, password))
         cursor.execute("FLUSH PRIVILEGES")
         mariadb_connection.commit()
 
@@ -79,12 +84,14 @@ def create_database(event, stack_name):
 
     except mariadb.Error as err:
         print(f"Error: {err}")
-        send_response(event, status='FAILED', reason="Error creating database and user")
+        send_response(
+            event, status='FAILED', reason="Error creating database and user")
     finally:
         mariadb_connection.close()
 
 
 def delete_database(event, stack_name):
+    """Delete existing database and user for Wordpress application"""
     try:
         vpc_mask = os.environ['VPC_CIDR'][:-2] + "255.255.0.0"
         # using stack_name prevents against SQL injections
@@ -98,7 +105,8 @@ def delete_database(event, stack_name):
 
     except mariadb.Error as err:
         print(f"Error: {err}")
-        send_response(event, status='FAILED', reason="Error deleting database or user")
+        send_response(
+            event, status='FAILED', reason="Error deleting database or user")
     finally:
         mariadb_connection.close()
 
@@ -117,7 +125,9 @@ def send_response(event, status, reason="", data=None):
         'Reason': reason,
         'RequestId': event['RequestId'],
         'LogicalResourceId': event['LogicalResourceId'],
-        'PhysicalResourceId': event.get('PhysicalResourceId', None) or event['LogicalResourceId'] + str(uuid4()),
+        'PhysicalResourceId':
+        event.get('PhysicalResourceId', None)
+        or event['LogicalResourceId'] + str(uuid4()),
         'Data': data
     }
 

@@ -17,7 +17,8 @@ vpc_cidr = os.environ['VPC_CIDR']
 table_name = os.environ['DYNAMO_TABLE_NAME']
 region = os.environ['DYNAMO_REGION']
 
-dynamodb_table = boto3.resource('dynamodb', region_name=region).Table(table_name)
+dynamodb_table = boto3.resource(
+    'dynamodb', region_name=region).Table(table_name)
 
 
 def handler(event, context):
@@ -33,9 +34,8 @@ def handler(event, context):
         print("Deleting Subnets...")
         return delete_subnets(event, stack_id)
     # otherwise allocate subnets for this stack
-    else:
-        print("Allocating Subnets...")
-        return allocate_subnets(event, stack_id)
+    print("Allocating Subnets...")
+    return allocate_subnets(event, stack_id)
 
 
 def delete_subnets(event, stack_id):
@@ -89,7 +89,8 @@ def allocate_subnets(event, stack_id):
             send_response(
                 event,
                 status='FAILED',
-                reason=f"Couldn't obtain {number_to_allocate} CIDR for stack from DynamoDB query"
+                reason=
+                f"Couldn't obtain {number_to_allocate} CIDR for stack from DynamoDB query"
             )
             return
 
@@ -104,8 +105,7 @@ def allocate_subnets(event, stack_id):
         send_response(event, status='SUCCESS', data=response_data)
 
     except Exception as err:
-        send_response(
-            event, status='FAILED', reason="Failed allocate subnets")
+        send_response(event, status='FAILED', reason="Failed allocate subnets")
         print(f"Error: {err}")
 
 
@@ -150,7 +150,9 @@ def send_response(event, status, reason="", data=None):
         'Reason': reason,
         'RequestId': event['RequestId'],
         'LogicalResourceId': event['LogicalResourceId'],
-        'PhysicalResourceId': event.get('PhysicalResourceId', None) or event['LogicalResourceId'] + str(uuid4()),
+        'PhysicalResourceId':
+        event.get('PhysicalResourceId', None)
+        or event['LogicalResourceId'] + str(uuid4()),
         'Data': data
     }
 
