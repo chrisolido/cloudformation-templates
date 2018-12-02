@@ -97,8 +97,8 @@ def delete_database(event, stack_name):
         # using stack_name prevents against SQL injections
         # as it only allows alphanumerical characters and "-"
         # and the commands fails with %s param substitution because of single quotes
-        cursor.execute(f"DROP DATABASE {stack_name}")
-        cursor.execute("DROP USER %s@%s", (stack_name, vpc_mask))
+        cursor.execute(f"DROP DATABASE IF EXISTS {stack_name}")
+        cursor.execute("DROP USER IF EXISTS %s@%s", (stack_name, vpc_mask))
         mariadb_connection.commit()
 
         send_response(event, status='SUCCESS')
