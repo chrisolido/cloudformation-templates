@@ -211,6 +211,41 @@
                 }
             }
         },
+        "WPFileSystem": {
+            "Type": "AWS::EFS::FileSystem"
+        },
+        "WPEFSMount1": {
+            "Type": "AWS::EFS::MountTarget",
+            "Properties": {
+                "FileSystemId": {
+                    "Ref": "WPFileSystem"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "WPSecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "PublicSubnet1"
+                }
+            }
+        },
+        "WPEFSMount2": {
+            "Type": "AWS::EFS::MountTarget",
+            "Properties": {
+                "FileSystemId": {
+                    "Ref": "WPFileSystem"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "WPSecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "PublicSubnet2"
+                }
+            }
+        },
         "WPLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
