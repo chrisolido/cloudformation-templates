@@ -122,6 +122,8 @@ Resources:
       SubnetId: !Ref PublicSubnet2
   WPFileSystem:
     Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose
   WPEFSMount1:
     Type: AWS::EFS::MountTarget
     Properties:
