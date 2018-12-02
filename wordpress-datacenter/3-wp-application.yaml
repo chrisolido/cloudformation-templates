@@ -8,7 +8,6 @@ Metadata:
         Parameters:
           - ApplicationSize
           - KeyPair
-          - SSHLocation
           - MinSize
           - MaxSize
           - DesiredCapacity
@@ -25,14 +24,6 @@ Parameters:
   KeyPair:
     Description: Amazon EC2 Key Pair for SSH Access
     Type: AWS::EC2::KeyPair::KeyName
-  SSHLocation:
-    Description: The IP address range that can be used to SSH to the EC2 instances
-    Type: String
-    MinLength: "9"
-    MaxLength: "18"
-    Default: 10.20.0.0/16
-    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
   MinSize:
     Type: String
     Description: Minimum number of EC2 instances
@@ -335,7 +326,7 @@ Resources:
           IpProtocol: tcp
           ToPort: 22
           FromPort: 22
-          CidrIp: !Ref SSHLocation
+          CidrIp: !ImportValue shared-vpc-cidr
         # port 2049 is for EFS
         -
           IpProtocol: tcp
