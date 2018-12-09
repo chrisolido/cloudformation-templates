@@ -351,6 +351,29 @@
                 ]
             }
         },
+        "WPAutoScalingPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "WPAutoScalingGroup"
+                },
+                "PolicyType": "StepScaling",
+                "MetricAggregationType": "Average",
+                "EstimatedInstanceWarmup": 60,
+                "StepAdjustments": [
+                    {
+                        "MetricIntervalLowerBound": 0,
+                        "MetricIntervalUpperBound": 50,
+                        "ScalingAdjustment": 1
+                    },
+                    {
+                        "MetricIntervalLowerBound": 50,
+                        "ScalingAdjustment": 2
+                    }
+                ]
+            }
+        },
         "WPLaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
