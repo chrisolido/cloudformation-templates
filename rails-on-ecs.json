@@ -106,7 +106,7 @@
         "ECSCluster": {
             "Type": "AWS::ECS::Cluster"
         },
-        "EcsSecurityGroup": {
+        "ECSSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "ECS Security Group",
@@ -115,11 +115,11 @@
                 }
             }
         },
-        "EcsSecurityGroupHTTPinbound": {
+        "ECSSecurityGroupHTTPinbound": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
                 "GroupId": {
-                    "Ref": "EcsSecurityGroup"
+                    "Ref": "ECSSecurityGroup"
                 },
                 "IpProtocol": "tcp",
                 "FromPort": 80,
@@ -127,11 +127,11 @@
                 "CidrIp": "0.0.0.0/0"
             }
         },
-        "EcsSecurityGroupSSHinbound": {
+        "ECSSecurityGroupSSHinbound": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
                 "GroupId": {
-                    "Ref": "EcsSecurityGroup"
+                    "Ref": "ECSSecurityGroup"
                 },
                 "IpProtocol": "tcp",
                 "FromPort": 22,
