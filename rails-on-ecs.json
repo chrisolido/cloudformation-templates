@@ -241,7 +241,6 @@
         "ECSALB": {
             "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
-                "Name": "ECSALB",
                 "Scheme": "internet-facing",
                 "LoadBalancerAttributes": [
                     {
@@ -313,7 +312,6 @@
                 "HealthCheckProtocol": "HTTP",
                 "HealthCheckTimeoutSeconds": 5,
                 "HealthyThresholdCount": 2,
-                "Name": "ECSTG",
                 "Port": 80,
                 "Protocol": "HTTP",
                 "UnhealthyThresholdCount": 2,
