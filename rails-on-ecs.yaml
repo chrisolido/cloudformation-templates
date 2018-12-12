@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
@@ -11,42 +11,66 @@ Parameters:
     Description: Select at two subnets in your selected VPC.
   DesiredCapacity:
     Type: Number
-    Default: '1'
+    Default: 1
     Description: Number of instances to launch in your ECS cluster.
   MaxSize:
     Type: Number
-    Default: '1'
+    Default: 1
     Description: Maximum number of instances that can be launched in your ECS cluster.
-  InstanceType:
-    Description: EC2 instance type
+  ApplicationSize:
     Type: String
-    Default: t2.micro
-    AllowedValues: [t2.micro, t2.small, t2.medium, t2.large, m3.medium, m3.large,
-      m3.xlarge, m3.2xlarge, m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
-      c4.large, c4.xlarge, c4.2xlarge, c4.4xlarge, c4.8xlarge, c3.large, c3.xlarge,
-      c3.2xlarge, c3.4xlarge, c3.8xlarge, r3.large, r3.xlarge, r3.2xlarge, r3.4xlarge,
-      r3.8xlarge, i2.xlarge, i2.2xlarge, i2.4xlarge, i2.8xlarge]
-    ConstraintDescription: Please choose a valid instance type.
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - SMALL
+      - MEDIUM
+      - LARGE
+    Description: Select Application Size (S,M,L)
 Mappings:
   AWSRegionToAMI:
     us-east-1:
-      AMIID: ami-eca289fb
+      ECSAMI: ami-0a6b7e0cc0b1f464f
     us-east-2:
-      AMIID: ami-446f3521
+      ECSAMI: ami-037a92bf1efdb11a2
     us-west-1:
-      AMIID: ami-9fadf8ff
+      ECSAMI: ami-0184f498956de7db5
     us-west-2:
-      AMIID: ami-7abc111a
+      ECSAMI: ami-0c1f4871ebaae6d86
+    ca-central-1:
+      ECSAMI: ami-02c80e9173258d289
     eu-west-1:
-      AMIID: ami-a1491ad2
+      ECSAMI: ami-0acc9f8be17a41897
+    eu-west-2:
+      ECSAMI: ami-0b5225210a12d9951
+    eu-west-3:
+      ECSAMI: ami-0caadc4f0db31a303
     eu-central-1:
-      AMIID: ami-54f5303b
+      ECSAMI: ami-055aa9664ef169e25
     ap-northeast-1:
-      AMIID: ami-9cd57ffd
+      ECSAMI: ami-0c38293d60d98af86
+    ap-northeast-2:
+      ECSAMI: ami-0bdc871079baf9649
     ap-southeast-1:
-      AMIID: ami-a900a3ca
+      ECSAMI: ami-0e28ff4e3f1776d86
     ap-southeast-2:
-      AMIID: ami-5781be34
+      ECSAMI: ami-0eed1c915ea891aca
+    ap-south-1:
+      ECSAMI: ami-0b7c3be99909df6ef
+    sa-east-1:
+      ECSAMI: ami-078146697425f25a7
+  InstanceSize:
+    DEV:
+      EC2: t2.micro
+      DB: db.t2.micro
+    SMALL:
+      EC2: t3.small
+      DB: db.t2.small
+    MEDIUM:
+      EC2: t3.medium
+      DB: db.t2.medium
+    LARGE:
+      EC2: m5.large
+      DB: db.m5.large
 Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -54,58 +78,61 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: ECS Security Group
-      VpcId: !Ref 'VpcId'
+      VpcId: !Ref VpcId
   EcsSecurityGroupHTTPinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref 'EcsSecurityGroup'
+      GroupId: !Ref EcsSecurityGroup
       IpProtocol: tcp
-      FromPort: '80'
-      ToPort: '80'
+      FromPort: 80
+      ToPort: 80
       CidrIp: 0.0.0.0/0
   EcsSecurityGroupSSHinbound:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref 'EcsSecurityGroup'
+      GroupId: !Ref EcsSecurityGroup
       IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
+      FromPort: 22
+      ToPort: 22
       CidrIp: 0.0.0.0/0
   EcsSecurityGroupALBports:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref 'EcsSecurityGroup'
+      GroupId: !Ref EcsSecurityGroup
       IpProtocol: tcp
-      FromPort: '31000'
-      ToPort: '61000'
-      SourceSecurityGroupId: !Ref 'EcsSecurityGroup'
+      FromPort: 31000
+      ToPort: 61000
+      SourceSecurityGroupId: !Ref EcsSecurityGroup
   CloudwatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['-', [ECSLogGroup, !Ref 'AWS::StackName']]
+      LogGroupName: !Sub "${ECSLogGroup}-${AWS::StackName}"
       RetentionInDays: 14
   taskdefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Join ['', [!Ref 'AWS::StackName', -ecs-demo-app]]
+      Family: !Sub "${AWS::StackName}-rails-on-ecs"
       ContainerDefinitions:
-      - Name: simple-app
-        Cpu: '10'
-        Essential: 'true'
+      -
+        Name: simple-app
+        Cpu: 10
+        Essential: true
         Image: httpd:2.4
-        Memory: '300'
+        Memory: 300
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
+            awslogs-group: !Ref CloudwatchLogsGroup
+            awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs-demo-app
         MountPoints:
-        - ContainerPath: /usr/local/apache2/htdocs
+        -
+          ContainerPath: /usr/local/apache2/htdocs
           SourceVolume: my-vol
         PortMappings:
         - ContainerPort: 80
-      - Name: busybox
+      -
+        Name: busybox
         Cpu: 10
         Command: ['/bin/sh -c "while true; do echo ''<html> <head> <title>Amazon ECS
             Sample App</title> <style>body {margin-top: 40px; background-color: #333;}
@@ -121,8 +148,8 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group: !Ref 'CloudwatchLogsGroup'
-            awslogs-region: !Ref 'AWS::Region'
+            awslogs-group: !Ref CloudwatchLogsGroup
+            awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs-demo-app
         VolumesFrom:
         - SourceContainer: simple-app
@@ -134,31 +161,37 @@ Resources:
       Name: ECSALB
       Scheme: internet-facing
       LoadBalancerAttributes:
-      - Key: idle_timeout.timeout_seconds
-        Value: '30'
-      Subnets: !Ref 'SubnetId'
-      SecurityGroups: [!Ref 'EcsSecurityGroup']
+      -
+        Key: idle_timeout.timeout_seconds
+        Value: 30
+      Subnets: !Ref SubnetId
+      SecurityGroups:
+        - !Ref EcsSecurityGroup
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn: ECSServiceRole
     Properties:
       DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref 'ECSTG'
-      LoadBalancerArn: !Ref 'ECSALB'
-      Port: '80'
+      -
+        Type: forward
+        TargetGroupArn: !Ref ECSTG
+      LoadBalancerArn: !Ref ECSALB
+      Port: 80
       Protocol: HTTP
   ECSALBListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     DependsOn: ALBListener
     Properties:
       Actions:
-      - Type: forward
-        TargetGroupArn: !Ref 'ECSTG'
+      -
+        Type: forward
+        TargetGroupArn: !Ref ECSTG
       Conditions:
-      - Field: path-pattern
-        Values: [/]
-      ListenerArn: !Ref 'ALBListener'
+      -
+        Field: path-pattern
+        Values:
+          - /
+      ListenerArn: !Ref ALBListener
       Priority: 1
   ECSTG:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -173,29 +206,29 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !Ref 'VpcId'
+      VpcId: !Ref VpcId
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      VPCZoneIdentifier: !Ref 'SubnetId'
-      LaunchConfigurationName: !Ref 'ContainerInstances'
-      MinSize: '1'
-      MaxSize: !Ref 'MaxSize'
-      DesiredCapacity: !Ref 'DesiredCapacity'
+      VPCZoneIdentifier: !Ref SubnetId
+      LaunchConfigurationName: !Ref ContainerInstances
+      MinSize: 1
+      MaxSize: !Ref MaxSize
+      DesiredCapacity: !Ref DesiredCapacity
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
     UpdatePolicy:
       AutoScalingReplacingUpdate:
-        WillReplace: 'true'
+        WillReplace: true
   ContainerInstances:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
-      SecurityGroups: [!Ref 'EcsSecurityGroup']
-      InstanceType: !Ref 'InstanceType'
-      IamInstanceProfile: !Ref 'EC2InstanceProfile'
-      KeyName: !Ref 'KeyName'
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref AWS::Region, ECSAMI]
+      SecurityGroups: [!Ref EcsSecurityGroup]
+      InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KeyName
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -206,33 +239,44 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: ALBListener
     Properties:
-      Cluster: !Ref 'ECSCluster'
-      DesiredCount: '1'
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
       LoadBalancers:
-      - ContainerName: simple-app
-        ContainerPort: '80'
-        TargetGroupArn: !Ref 'ECSTG'
-      Role: !Ref 'ECSServiceRole'
-      TaskDefinition: !Ref 'taskdefinition'
+      -
+        ContainerName: simple-app
+        ContainerPort: 80
+        TargetGroupArn: !Ref ECSTG
+      Role: !Ref ECSServiceRole
+      TaskDefinition: !Ref taskdefinition
   ECSServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
+        -
+          Effect: Allow
           Principal:
-            Service: [ecs.amazonaws.com]
-          Action: ['sts:AssumeRole']
+            Service:
+              - ecs.amazonaws.com
+          Action:
+            - sts:AssumeRole
       Path: /
       Policies:
-      - PolicyName: ecs-service
+      -
+        PolicyName: ecs-service
         PolicyDocument:
           Statement:
-          - Effect: Allow
-            Action: ['elasticloadbalancing:DeregisterInstancesFromLoadBalancer', 'elasticloadbalancing:DeregisterTargets',
-              'elasticloadbalancing:Describe*', 'elasticloadbalancing:RegisterInstancesWithLoadBalancer',
-              'elasticloadbalancing:RegisterTargets', 'ec2:Describe*', 'ec2:AuthorizeSecurityGroupIngress']
-            Resource: '*'
+          -
+            Effect: Allow
+            Action:
+              - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+              - elasticloadbalancing:DeregisterTargets
+              - elasticloadbalancing:Describe*
+              - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+              - elasticloadbalancing:RegisterTargets
+              - ec2:Describe*
+              - ec2:AuthorizeSecurityGroupIngress
+            Resource: "*"
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn: service
@@ -248,29 +292,30 @@ Resources:
     Properties:
       PolicyName: AStepPolicy
       PolicyType: StepScaling
-      ScalingTargetId: !Ref 'ServiceScalingTarget'
+      ScalingTargetId: !Ref ServiceScalingTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: PercentChangeInCapacity
         Cooldown: 60
         MetricAggregationType: Average
         StepAdjustments:
-        - MetricIntervalLowerBound: 0
+        -
+          MetricIntervalLowerBound: 0
           ScalingAdjustment: 200
   ALB500sAlarmScaleUp:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      EvaluationPeriods: '1'
+      EvaluationPeriods: 1
       Statistic: Average
-      Threshold: '10'
+      Threshold: 10
       AlarmDescription: Alarm if our ALB generates too many HTTP 500s.
-      Period: '60'
-      AlarmActions: [!Ref 'ServiceScalingPolicy']
+      Period: 60
+      AlarmActions:
+        - !Ref ServiceScalingPolicy
       Namespace: AWS/ApplicationELB
       Dimensions:
-        - Name: LoadBalancer
-          Value: !GetAtt 
-            - ECSALB
-            - LoadBalancerFullName
+        -
+          Name: LoadBalancer
+          Value: !GetAtt [ECSALB, LoadBalancerFullName]
       ComparisonOperator: GreaterThanThreshold
       MetricName: HTTPCode_ELB_5XX_Count
   EC2Role:
@@ -278,50 +323,72 @@ Resources:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
+        -
+          Effect: Allow
           Principal:
-            Service: [ec2.amazonaws.com]
-          Action: ['sts:AssumeRole']
+            Service:
+              - ec2.amazonaws.com
+          Action:
+            - sts:AssumeRole
       Path: /
       Policies:
-      - PolicyName: ecs-service
+      -
+        PolicyName: ecs-service
         PolicyDocument:
           Statement:
-          - Effect: Allow
-            Action: ['ecs:CreateCluster', 'ecs:DeregisterContainerInstance', 'ecs:DiscoverPollEndpoint',
-              'ecs:Poll', 'ecs:RegisterContainerInstance', 'ecs:StartTelemetrySession',
-              'ecs:Submit*', 'logs:CreateLogStream', 'logs:PutLogEvents']
-            Resource: '*'
+          -
+            Effect: Allow
+            Action:
+              - ecs:CreateCluster
+              - ecs:DeregisterContainerInstance
+              - ecs:DiscoverPollEndpoint
+              - ecs:Poll
+              - ecs:RegisterContainerInstance
+              - ecs:StartTelemetrySession
+              - ecs:Submit*
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
   AutoscalingRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
+        -
+          Effect: Allow
           Principal:
-            Service: [application-autoscaling.amazonaws.com]
-          Action: ['sts:AssumeRole']
+            Service:
+              - application-autoscaling.amazonaws.com
+          Action:
+            - sts:AssumeRole
       Path: /
       Policies:
-      - PolicyName: service-autoscaling
+      -
+        PolicyName: service-autoscaling
         PolicyDocument:
           Statement:
-          - Effect: Allow
-            Action: ['application-autoscaling:*', 'cloudwatch:DescribeAlarms', 'cloudwatch:PutMetricAlarm',
-              'ecs:DescribeServices', 'ecs:UpdateService']
-            Resource: '*'
+          -
+            Effect: Allow
+            Action:
+              - application-autoscaling:*
+              - cloudwatch:DescribeAlarms
+              - cloudwatch:PutMetricAlarm
+              - ecs:DescribeServices
+              - ecs:UpdateService
+            Resource: "*"
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
-      Roles: [!Ref 'EC2Role']
+      Roles:
+        - !Ref EC2Role
 Outputs:
   ecsservice:
-    Value: !Ref 'service'
+    Value: !Ref service
   ecscluster:
-    Value: !Ref 'ECSCluster'
+    Value: !Ref ECSCluster
   ECSALB:
     Description: Your ALB DNS URL
-    Value: !Join ['', [!GetAtt [ECSALB, DNSName]]]
+    Value: !Sub "http://${ECSALB.DNSName}"
   taskdef:
-    Value: !Ref 'taskdefinition'
+    Value: !Ref taskdefinition
