@@ -106,7 +106,7 @@ Resources:
   CloudwatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "${ECSLogGroup}-${AWS::StackName}"
+      LogGroupName: !Sub "ECSLogGroup-${AWS::StackName}"
       RetentionInDays: 14
   taskdefinition:
     Type: AWS::ECS::TaskDefinition

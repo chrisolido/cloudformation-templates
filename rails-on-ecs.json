@@ -157,7 +157,7 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
                 "LogGroupName": {
-                    "Fn::Sub": "${ECSLogGroup}-${AWS::StackName}"
+                    "Fn::Sub": "ECSLogGroup-${AWS::StackName}"
                 },
                 "RetentionInDays": 14
             }
