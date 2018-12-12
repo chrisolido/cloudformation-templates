@@ -137,7 +137,7 @@ Resources:
         Name: busybox
         Cpu: 10
         Command: ['/bin/sh -c "while true; do echo ''<html> <head> <title>Amazon ECS
-            Sample App</title> <style>body {margin-top: 40px; background-color: #333;}
+            Sample App</title> <style>body {margin-top: 40px; background-color: #333; font-family: Helvetica, Helvetica Neue, Arial;}
             </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon
             ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now
             running on a container in Amazon ECS.</p>'' > top; /bin/date > date ;
