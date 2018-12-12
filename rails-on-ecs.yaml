@@ -211,7 +211,7 @@ Resources:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier: !Ref SubnetId
-      LaunchConfigurationName: !Ref ContainerInstances
+      LaunchConfigurationName: !Ref ClusterLaunchConfiguration
       MinSize: 1
       MaxSize: !Ref MaxSize
       DesiredCapacity: !Ref DesiredCapacity
@@ -221,7 +221,7 @@ Resources:
     UpdatePolicy:
       AutoScalingReplacingUpdate:
         WillReplace: true
-  ContainerInstances:
+  ClusterLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", ECSAMI]

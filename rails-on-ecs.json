@@ -327,7 +327,7 @@
                     "Ref": "SubnetId"
                 },
                 "LaunchConfigurationName": {
-                    "Ref": "ContainerInstances"
+                    "Ref": "ClusterLaunchConfiguration"
                 },
                 "MinSize": 1,
                 "MaxSize": {
@@ -348,7 +348,7 @@
                 }
             }
         },
-        "ContainerInstances": {
+        "ClusterLaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
                 "ImageId": {
