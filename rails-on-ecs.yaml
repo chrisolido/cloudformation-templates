@@ -3,6 +3,13 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances.
+    Type: String
+    MinLength: "9"
+    MaxLength: "18"
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: Select a VPC that allows instances access to the Internet.
@@ -79,22 +86,17 @@ Resources:
     Properties:
       GroupDescription: ECS Security Group
       VpcId: !Ref VpcId
-  ECSSecurityGroupHTTPinbound:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref ECSSecurityGroup
-      IpProtocol: tcp
-      FromPort: 80
-      ToPort: 80
-      CidrIp: 0.0.0.0/0
-  ECSSecurityGroupSSHinbound:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !Ref ECSSecurityGroup
-      IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
-      CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+        -
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
   ECSSecurityGroupALBports:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -223,7 +225,8 @@ Resources:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", ECSAMI]
-      SecurityGroups: [!Ref ECSSecurityGroup]
+      SecurityGroups:
+        - !Ref ECSSecurityGroup
       InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
       IamInstanceProfile: !Ref EC2InstanceProfile
       KeyName: !Ref KeyName
