@@ -316,12 +316,6 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       MetricName: HTTPCode_ELB_5XX_Count
 Outputs:
-  ecsservice:
-    Value: !Ref service
-  ecscluster:
-    Value: !Ref ECSCluster
   ECSALB:
     Description: Your ALB DNS URL
     Value: !Sub "http://${ECSALB.DNSName}"
-  taskdef:
-    Value: !Ref taskdefinition

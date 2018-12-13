@@ -533,25 +533,10 @@
         }
     },
     "Outputs": {
-        "ecsservice": {
-            "Value": {
-                "Ref": "service"
-            }
-        },
-        "ecscluster": {
-            "Value": {
-                "Ref": "ECSCluster"
-            }
-        },
         "ECSALB": {
             "Description": "Your ALB DNS URL",
             "Value": {
                 "Fn::Sub": "http://${ECSALB.DNSName}"
-            }
-        },
-        "taskdef": {
-            "Value": {
-                "Ref": "taskdefinition"
             }
         }
     }
