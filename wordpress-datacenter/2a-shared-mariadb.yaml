@@ -58,13 +58,13 @@ Mappings:
       DB: db.t2.micro
       Size: "5"
     SMALL:
-      DB: db.t2.medium
+      DB: db.m5.large
       Size: "10"
     MEDIUM:
-      DB: db.m5.large
+      DB: db.m5.2xlarge
       Size: "20"
     LARGE:
-      DB: db.m5.2xlarge
+      DB: db.m5.4xlarge
       Size: "40"
 Resources:
   SharedMariaDB:
