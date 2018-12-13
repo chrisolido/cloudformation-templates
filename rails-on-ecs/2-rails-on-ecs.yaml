@@ -218,7 +218,7 @@ Resources:
           echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
           yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
-  taskdefinition:
+  RailsTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub "${AWS::StackName}-rails-on-ecs"
@@ -264,7 +264,7 @@ Resources:
             - SourceContainer: simple-app
       Volumes:
         - Name: my-vol
-  service:
+  RailsService:
     Type: AWS::ECS::Service
     DependsOn: ALBListener
     Properties:
@@ -276,13 +276,13 @@ Resources:
           ContainerPort: 80
           TargetGroupArn: !Ref ECSTargetGroup
       Role: !ImportValue ecs-service-role
-      TaskDefinition: !Ref taskdefinition
+      TaskDefinition: !Ref RailsTaskDefinition
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MaxCapacity: 2
       MinCapacity: 1
-      ResourceId: !Sub "service/${ECSCluster}/${service.Name}"
+      ResourceId: !Sub "service/${ECSCluster}/${RailsService.Name}"
       RoleARN: !ImportValue autoscaling-role-arn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs

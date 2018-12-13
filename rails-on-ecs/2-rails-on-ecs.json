@@ -365,7 +365,7 @@
                 }
             }
         },
-        "taskdefinition": {
+        "RailsTaskDefinition": {
             "Type": "AWS::ECS::TaskDefinition",
             "Properties": {
                 "Family": {
@@ -441,7 +441,7 @@
                 ]
             }
         },
-        "service": {
+        "RailsService": {
             "Type": "AWS::ECS::Service",
             "DependsOn": "ALBListener",
             "Properties": {
@@ -462,7 +462,7 @@
                     "Fn::ImportValue": "ecs-service-role"
                 },
                 "TaskDefinition": {
-                    "Ref": "taskdefinition"
+                    "Ref": "RailsTaskDefinition"
                 }
             }
         },
@@ -472,7 +472,7 @@
                 "MaxCapacity": 2,
                 "MinCapacity": 1,
                 "ResourceId": {
-                    "Fn::Sub": "service/${ECSCluster}/${service.Name}"
+                    "Fn::Sub": "service/${ECSCluster}/${RailsService.Name}"
                 },
                 "RoleARN": {
                     "Fn::ImportValue": "autoscaling-role-arn"
