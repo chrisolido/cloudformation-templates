@@ -461,7 +461,6 @@
                 "Path": "/",
                 "Policies": [
                     {
-                        "PolicyName": "ecs-service",
                         "PolicyDocument": {
                             "Statement": [
                                 {
@@ -473,7 +472,9 @@
                                         "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
                                         "elasticloadbalancing:RegisterTargets",
                                         "ec2:Describe*",
-                                        "ec2:AuthorizeSecurityGroupIngress"
+                                        "ec2:AuthorizeSecurityGroupIngress",
+                                        "s3:List*",
+                                        "s3:Get*"
                                     ],
                                     "Resource": "*"
                                 }
@@ -573,7 +574,6 @@
                 "Path": "/",
                 "Policies": [
                     {
-                        "PolicyName": "ecs-service",
                         "PolicyDocument": {
                             "Statement": [
                                 {
@@ -618,7 +618,6 @@
                 "Path": "/",
                 "Policies": [
                     {
-                        "PolicyName": "service-autoscaling",
                         "PolicyDocument": {
                             "Statement": [
                                 {

@@ -277,9 +277,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        -
-          PolicyName: ecs-service
-          PolicyDocument:
+        - PolicyDocument:
             Statement:
               -
                 Effect: Allow
@@ -291,6 +289,8 @@ Resources:
                   - elasticloadbalancing:RegisterTargets
                   - ec2:Describe*
                   - ec2:AuthorizeSecurityGroupIngress
+                  - s3:List*
+                  - s3:Get*
                 Resource: "*"
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -345,9 +345,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        -
-          PolicyName: ecs-service
-          PolicyDocument:
+        - PolicyDocument:
             Statement:
             -
               Effect: Allow
@@ -376,9 +374,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        -
-          PolicyName: service-autoscaling
-          PolicyDocument:
+        - PolicyDocument:
             Statement:
             -
               Effect: Allow
