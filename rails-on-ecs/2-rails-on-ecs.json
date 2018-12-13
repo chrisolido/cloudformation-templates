@@ -5,15 +5,6 @@
             "ParameterGroups": [
                 {
                     "Label": {
-                        "default": "Networking Configuration"
-                    },
-                    "Parameters": [
-                        "VpcId",
-                        "SubnetId"
-                    ]
-                },
-                {
-                    "Label": {
                         "default": "SSH Configuration"
                     },
                     "Parameters": [
@@ -46,14 +37,6 @@
             "MaxLength": "18",
             "Default": "0.0.0.0/0",
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
-        },
-        "VpcId": {
-            "Type": "AWS::EC2::VPC::Id",
-            "Description": "Select a VPC that allows instances access to the Internet."
-        },
-        "SubnetId": {
-            "Type": "List<AWS::EC2::Subnet::Id>",
-            "Description": "Select at two subnets in your selected VPC."
         },
         "DesiredCapacity": {
             "Type": "Number",
@@ -153,7 +136,7 @@
             "Properties": {
                 "GroupDescription": "ECS Security Group",
                 "VpcId": {
-                    "Ref": "VpcId"
+                    "Fn::ImportValue": "shared-vpc-id"
                 },
                 "SecurityGroupIngress": [
                     {
@@ -310,9 +293,14 @@
                         "Value": 30
                     }
                 ],
-                "Subnets": {
-                    "Ref": "SubnetId"
-                },
+                "Subnets": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-public-subnet1"
+                    },
+                    {
+                        "Fn::ImportValue": "shared-vpc-public-subnet2"
+                    }
+                ],
                 "SecurityGroups": [
                     {
                         "Ref": "ECSSecurityGroup"
@@ -378,16 +366,21 @@
                 "Protocol": "HTTP",
                 "UnhealthyThresholdCount": 2,
                 "VpcId": {
-                    "Ref": "VpcId"
+                    "Fn::ImportValue": "shared-vpc-id"
                 }
             }
         },
         "ECSAutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
-                "VPCZoneIdentifier": {
-                    "Ref": "SubnetId"
-                },
+                "VPCZoneIdentifier": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-public-subnet1"
+                    },
+                    {
+                        "Fn::ImportValue": "shared-vpc-public-subnet2"
+                    }
+                ],
                 "LaunchConfigurationName": {
                     "Ref": "ClusterLaunchConfiguration"
                 },
