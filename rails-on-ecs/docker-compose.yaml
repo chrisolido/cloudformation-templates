@@ -6,13 +6,20 @@ services:
       - 5432:5432
     volumes:
       - postgres:/var/lib/postgresql/data
+
   web:
     build: rails-on-ecs
+    entrypoint: /docker-entrypoint.sh
     command: bundle exec rails server -p 3000 -b '0.0.0.0'
-    ports:
-      - 3000:3000
     depends_on:
       - postgres
+
+  nginx:
+    build: rails-nginx
+    depends_on:
+      - web
+    ports:
+      - 3000:80
 
 volumes:
   postgres:
