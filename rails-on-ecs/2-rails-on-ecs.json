@@ -310,7 +310,6 @@
         },
         "ALBListener": {
             "Type": "AWS::ElasticLoadBalancingV2::Listener",
-            "DependsOn": "ECSServiceRole",
             "Properties": {
                 "DefaultActions": [
                     {
@@ -430,14 +429,14 @@
                     ]
                 },
                 "IamInstanceProfile": {
-                    "Ref": "EC2InstanceProfile"
+                    "Fn::ImportValue": "cluster-instance-profile"
                 },
                 "KeyName": {
                     "Ref": "KeyName"
                 },
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\nyum update -y && yum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"
                     }
                 }
             }
@@ -460,56 +459,11 @@
                     }
                 ],
                 "Role": {
-                    "Ref": "ECSServiceRole"
+                    "Fn::ImportValue": "ecs-service-role"
                 },
                 "TaskDefinition": {
                     "Ref": "taskdefinition"
                 }
-            }
-        },
-        "ECSServiceRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ecs.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                },
-                "Path": "/",
-                "Policies": [
-                    {
-                        "PolicyName": "RailsECSPolicy",
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                        "elasticloadbalancing:DeregisterTargets",
-                                        "elasticloadbalancing:Describe*",
-                                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                        "elasticloadbalancing:RegisterTargets",
-                                        "ec2:Describe*",
-                                        "ec2:AuthorizeSecurityGroupIngress",
-                                        "s3:List*",
-                                        "s3:Get*"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
             }
         },
         "ServiceScalingTarget": {
@@ -522,10 +476,7 @@
                     "Fn::Sub": "service/${ECSCluster}/${service.Name}"
                 },
                 "RoleARN": {
-                    "Fn::GetAtt": [
-                        "AutoscalingRole",
-                        "Arn"
-                    ]
+                    "Fn::ImportValue": "autoscaling-role-arn"
                 },
                 "ScalableDimension": "ecs:service:DesiredCount",
                 "ServiceNamespace": "ecs"
@@ -579,103 +530,6 @@
                 ],
                 "ComparisonOperator": "GreaterThanThreshold",
                 "MetricName": "HTTPCode_ELB_5XX_Count"
-            }
-        },
-        "EC2Role": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ec2.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                },
-                "Path": "/",
-                "Policies": [
-                    {
-                        "PolicyName": "EC2ECSServicePolicy",
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "ecs:CreateCluster",
-                                        "ecs:DeregisterContainerInstance",
-                                        "ecs:DiscoverPollEndpoint",
-                                        "ecs:Poll",
-                                        "ecs:RegisterContainerInstance",
-                                        "ecs:StartTelemetrySession",
-                                        "ecs:Submit*",
-                                        "logs:CreateLogStream",
-                                        "logs:PutLogEvents"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "AutoscalingRole": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "application-autoscaling.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                },
-                "Path": "/",
-                "Policies": [
-                    {
-                        "PolicyName": "ECSAutoscalingPolicy",
-                        "PolicyDocument": {
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "application-autoscaling:*",
-                                        "cloudwatch:DescribeAlarms",
-                                        "cloudwatch:PutMetricAlarm",
-                                        "ecs:DescribeServices",
-                                        "ecs:UpdateService"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "EC2InstanceProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "Properties": {
-                "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "EC2Role"
-                    }
-                ]
             }
         }
     },
