@@ -280,7 +280,6 @@ Resources:
   ECSServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      PolicyName: RailsECSPolicy
       AssumeRolePolicyDocument:
         Statement:
           -
@@ -292,7 +291,9 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyDocument:
+        -
+          PolicyName: RailsECSPolicy
+          PolicyDocument:
             Statement:
               -
                 Effect: Allow
@@ -349,7 +350,6 @@ Resources:
   EC2Role:
     Type: AWS::IAM::Role
     Properties:
-      PolicyName: EC2ECSServicePolicy
       AssumeRolePolicyDocument:
         Statement:
           -
@@ -361,7 +361,9 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyDocument:
+        -
+          PolicyName: EC2ECSServicePolicy
+          PolicyDocument:
             Statement:
             -
               Effect: Allow
@@ -379,7 +381,6 @@ Resources:
   AutoscalingRole:
     Type: AWS::IAM::Role
     Properties:
-      PolicyName: ECSAutoscalingPolicy
       AssumeRolePolicyDocument:
         Statement:
           -
@@ -391,7 +392,9 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyDocument:
+        -
+          PolicyName: ECSAutoscalingPolicy
+          PolicyDocument:
             Statement:
             -
               Effect: Allow
