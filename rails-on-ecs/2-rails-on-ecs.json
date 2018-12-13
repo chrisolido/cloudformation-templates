@@ -376,7 +376,7 @@
                         "Name": "simple-app",
                         "Cpu": 10,
                         "Essential": true,
-                        "Image": "httpd:2.4",
+                        "Image": "httpd:2.4-alpine",
                         "Memory": 300,
                         "LogConfiguration": {
                             "LogDriver": "awslogs",
