@@ -1,5 +1,39 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Networking Configuration"
+                    },
+                    "Parameters": [
+                        "VpcId",
+                        "SubnetId"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "SSH Configuration"
+                    },
+                    "Parameters": [
+                        "KeyName",
+                        "SSHLocation"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Application Configuration"
+                    },
+                    "Parameters": [
+                        "ApplicationSize",
+                        "DesiredCapacity",
+                        "MaxSize"
+                    ]
+                }
+            ]
+        }
+    },
     "Parameters": {
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
