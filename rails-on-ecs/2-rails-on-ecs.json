@@ -207,7 +207,7 @@
                 "RetentionInDays": 14
             }
         },
-        "ECSALB": {
+        "ECSApplicationLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
                 "Scheme": "internet-facing",
@@ -239,12 +239,12 @@
                     {
                         "Type": "forward",
                         "TargetGroupArn": {
-                            "Ref": "ECSTG"
+                            "Ref": "ECSTargetGroup"
                         }
                     }
                 ],
                 "LoadBalancerArn": {
-                    "Ref": "ECSALB"
+                    "Ref": "ECSApplicationLoadBalancer"
                 },
                 "Port": 80,
                 "Protocol": "HTTP"
@@ -258,7 +258,7 @@
                     {
                         "Type": "forward",
                         "TargetGroupArn": {
-                            "Ref": "ECSTG"
+                            "Ref": "ECSTargetGroup"
                         }
                     }
                 ],
@@ -276,9 +276,9 @@
                 "Priority": 1
             }
         },
-        "ECSTG": {
+        "ECSTargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
-            "DependsOn": "ECSALB",
+            "DependsOn": "ECSApplicationLoadBalancer",
             "Properties": {
                 "HealthCheckIntervalSeconds": 10,
                 "HealthCheckPath": "/",
@@ -454,7 +454,7 @@
                         "ContainerName": "simple-app",
                         "ContainerPort": 80,
                         "TargetGroupArn": {
-                            "Ref": "ECSTG"
+                            "Ref": "ECSTargetGroup"
                         }
                     }
                 ],
@@ -521,7 +521,7 @@
                         "Name": "LoadBalancer",
                         "Value": {
                             "Fn::GetAtt": [
-                                "ECSALB",
+                                "ECSApplicationLoadBalancer",
                                 "LoadBalancerFullName"
                             ]
                         }
@@ -533,10 +533,10 @@
         }
     },
     "Outputs": {
-        "ECSALB": {
-            "Description": "Your ALB DNS URL",
+        "ApplicationURL": {
+            "Description": "Your Application URL",
             "Value": {
-                "Fn::Sub": "http://${ECSALB.DNSName}"
+                "Fn::Sub": "http://${ECSApplicationLoadBalancer.DNSName}"
             }
         }
     }

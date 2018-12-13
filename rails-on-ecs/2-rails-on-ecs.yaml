@@ -139,7 +139,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "ECSLogGroup-${AWS::StackName}"
       RetentionInDays: 14
-  ECSALB:
+  ECSApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internet-facing
@@ -156,8 +156,8 @@ Resources:
     Properties:
       DefaultActions:
         - Type: forward
-          TargetGroupArn: !Ref ECSTG
-      LoadBalancerArn: !Ref ECSALB
+          TargetGroupArn: !Ref ECSTargetGroup
+      LoadBalancerArn: !Ref ECSApplicationLoadBalancer
       Port: 80
       Protocol: HTTP
   ECSALBListenerRule:
@@ -166,16 +166,16 @@ Resources:
     Properties:
       Actions:
         - Type: forward
-          TargetGroupArn: !Ref ECSTG
+          TargetGroupArn: !Ref ECSTargetGroup
       Conditions:
         - Field: path-pattern
           Values:
             - /
       ListenerArn: !Ref ALBListener
       Priority: 1
-  ECSTG:
+  ECSTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: ECSALB
+    DependsOn: ECSApplicationLoadBalancer
     Properties:
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: /
@@ -274,7 +274,7 @@ Resources:
         -
           ContainerName: simple-app
           ContainerPort: 80
-          TargetGroupArn: !Ref ECSTG
+          TargetGroupArn: !Ref ECSTargetGroup
       Role: !ImportValue ecs-service-role
       TaskDefinition: !Ref taskdefinition
   ServiceScalingTarget:
@@ -312,10 +312,10 @@ Resources:
       Namespace: AWS/ApplicationELB
       Dimensions:
         - Name: LoadBalancer
-          Value: !GetAtt [ECSALB, LoadBalancerFullName]
+          Value: !GetAtt [ECSApplicationLoadBalancer, LoadBalancerFullName]
       ComparisonOperator: GreaterThanThreshold
       MetricName: HTTPCode_ELB_5XX_Count
 Outputs:
-  ECSALB:
-    Description: Your ALB DNS URL
-    Value: !Sub "http://${ECSALB.DNSName}"
+  ApplicationURL:
+    Description: Your Application URL
+    Value: !Sub "http://${ECSApplicationLoadBalancer.DNSName}"
