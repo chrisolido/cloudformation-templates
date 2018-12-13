@@ -22,6 +22,10 @@ Can be used in multiple AWS regions. Multiple servers synced using AWS EFS.
 4. Deploy `3-wp-application` as needed. The infrastructure should be able to fit up to 100 stacks
 5. Deploy `4-bastion-host` as needed (for SSH into VPC)
 
+## Rails on ECS
+
+In progress
+
 ## Creating an EC2 Key Pair
 
 The use of these AWS CloudFormation templates will require you to specify an Amazon EC2 key pair for configuring SSH access to your instances.
