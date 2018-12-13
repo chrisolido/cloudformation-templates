@@ -1,5 +1,39 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Application Configuration"
+                    },
+                    "Parameters": [
+                        "EnvironmentSize"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "SSH Configuration"
+                    },
+                    "Parameters": [
+                        "KeyPair",
+                        "SSHLocation"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Database Configuration"
+                    },
+                    "Parameters": [
+                        "DatabaseName",
+                        "DatabaseUser",
+                        "DatabasePassword",
+                        "SnapshotToRestore"
+                    ]
+                }
+            ]
+        }
+    },
     "Parameters": {
         "EnvironmentSize": {
             "Type": "String",
