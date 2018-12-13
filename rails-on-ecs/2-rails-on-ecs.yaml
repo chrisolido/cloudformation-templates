@@ -199,7 +199,6 @@ Resources:
         - !Ref ECSSecurityGroup
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn: ECSServiceRole
     Properties:
       DefaultActions:
         - Type: forward
@@ -256,13 +255,14 @@ Resources:
       SecurityGroups:
         - !Ref ECSSecurityGroup
       InstanceType: !FindInMap [InstanceSize, !Ref ApplicationSize, EC2]
-      IamInstanceProfile: !Ref EC2InstanceProfile
+      IamInstanceProfile: !ImportValue cluster-instance-profile
       KeyName: !Ref KeyName
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          yum update -y
           echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-          yum update -y && yum install -y aws-cfn-bootstrap
+          yum install -y aws-cfn-bootstrap
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
   service:
     Type: AWS::ECS::Service
@@ -275,39 +275,8 @@ Resources:
           ContainerName: simple-app
           ContainerPort: 80
           TargetGroupArn: !Ref ECSTG
-      Role: !Ref ECSServiceRole
+      Role: !ImportValue ecs-service-role
       TaskDefinition: !Ref taskdefinition
-  ECSServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service:
-                - ecs.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        -
-          PolicyName: RailsECSPolicy
-          PolicyDocument:
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
-                  - ec2:Describe*
-                  - ec2:AuthorizeSecurityGroupIngress
-                  - s3:List*
-                  - s3:Get*
-                Resource: "*"
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     DependsOn: service
@@ -315,7 +284,7 @@ Resources:
       MaxCapacity: 2
       MinCapacity: 1
       ResourceId: !Sub "service/${ECSCluster}/${service.Name}"
-      RoleARN: !GetAtt [AutoscalingRole, Arn]
+      RoleARN: !ImportValue autoscaling-role-arn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
   ServiceScalingPolicy:
@@ -347,70 +316,6 @@ Resources:
           Value: !GetAtt [ECSALB, LoadBalancerFullName]
       ComparisonOperator: GreaterThanThreshold
       MetricName: HTTPCode_ELB_5XX_Count
-  EC2Role:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        -
-          PolicyName: EC2ECSServicePolicy
-          PolicyDocument:
-            Statement:
-            -
-              Effect: Allow
-              Action:
-                - ecs:CreateCluster
-                - ecs:DeregisterContainerInstance
-                - ecs:DiscoverPollEndpoint
-                - ecs:Poll
-                - ecs:RegisterContainerInstance
-                - ecs:StartTelemetrySession
-                - ecs:Submit*
-                - logs:CreateLogStream
-                - logs:PutLogEvents
-              Resource: "*"
-  AutoscalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          -
-            Effect: Allow
-            Principal:
-              Service:
-                - application-autoscaling.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      Policies:
-        -
-          PolicyName: ECSAutoscalingPolicy
-          PolicyDocument:
-            Statement:
-            -
-              Effect: Allow
-              Action:
-                - application-autoscaling:*
-                - cloudwatch:DescribeAlarms
-                - cloudwatch:PutMetricAlarm
-                - ecs:DescribeServices
-                - ecs:UpdateService
-              Resource: "*"
-  EC2InstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-        - !Ref EC2Role
 Outputs:
   ecsservice:
     Value: !Ref service
