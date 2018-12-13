@@ -139,14 +139,42 @@
                 ]
             }
         },
-        "ECSSecurityGroupALBports": {
+        "ECSSecurityGroupPostgresIngress": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
                 "GroupId": {
                     "Ref": "ECSSecurityGroup"
                 },
                 "IpProtocol": "tcp",
-                "FromPort": 31000,
+                "FromPort": 5432,
+                "ToPort": 5432,
+                "SourceSecurityGroupId": {
+                    "Ref": "ECSSecurityGroup"
+                }
+            }
+        },
+        "ECSSecurityGroupRedisIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "ECSSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": 6379,
+                "ToPort": 6379,
+                "SourceSecurityGroupId": {
+                    "Ref": "ECSSecurityGroup"
+                }
+            }
+        },
+        "ECSSecurityGroupALBIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "ECSSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": 32768,
                 "ToPort": 61000,
                 "SourceSecurityGroupId": {
                     "Ref": "ECSSecurityGroup"
