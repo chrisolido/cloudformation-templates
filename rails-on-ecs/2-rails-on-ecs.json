@@ -470,6 +470,7 @@
         "ECSServiceRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
+                "PolicyName": "RailsECSPolicy",
                 "AssumeRolePolicyDocument": {
                     "Statement": [
                         {
@@ -583,6 +584,7 @@
         "EC2Role": {
             "Type": "AWS::IAM::Role",
             "Properties": {
+                "PolicyName": "EC2ECSServicePolicy",
                 "AssumeRolePolicyDocument": {
                     "Statement": [
                         {
@@ -627,6 +629,7 @@
         "AutoscalingRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
+                "PolicyName": "ECSAutoscalingPolicy",
                 "AssumeRolePolicyDocument": {
                     "Statement": [
                         {
