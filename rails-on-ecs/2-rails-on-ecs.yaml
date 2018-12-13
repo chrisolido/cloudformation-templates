@@ -279,7 +279,6 @@ Resources:
       TaskDefinition: !Ref taskdefinition
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
-    DependsOn: service
     Properties:
       MaxCapacity: 2
       MinCapacity: 1
