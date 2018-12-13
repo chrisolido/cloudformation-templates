@@ -81,14 +81,14 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [0, !GetAZs ]
-      CidrBlock: !Ref PublicSubnet1
+      CidrBlock: !Ref PublicSubnetCidr1
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       AvailabilityZone: !Select [1, !GetAZs ]
-      CidrBlock: !Ref PublicSubnet2
+      CidrBlock: !Ref PublicSubnetCidr2
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
   SubnetRouteTableAssociatePublic1:
