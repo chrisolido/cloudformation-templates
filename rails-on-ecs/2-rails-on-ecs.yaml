@@ -289,7 +289,7 @@ Resources:
   ServiceScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: AStepPolicy
+      PolicyName: !Sub "${AWS::StackName}-ServiceScalingPolicy"
       PolicyType: StepScaling
       ScalingTargetId: !Ref ServiceScalingTarget
       StepScalingPolicyConfiguration:
@@ -305,7 +305,7 @@ Resources:
       EvaluationPeriods: 1
       Statistic: Average
       Threshold: 10
-      AlarmDescription: Alarm if our ALB generates too many HTTP 500s.
+      AlarmDescription: Alarm if our ALB generates too many HTTP 500s
       Period: 60
       AlarmActions:
         - !Ref ServiceScalingPolicy
@@ -314,7 +314,6 @@ Resources:
         - Name: LoadBalancer
           Value: !GetAtt [ECSApplicationLoadBalancer, LoadBalancerFullName]
       ComparisonOperator: GreaterThanThreshold
-      MetricName: HTTPCode_ELB_5XX_Count
 Outputs:
   ApplicationURL:
     Description: Your Application URL

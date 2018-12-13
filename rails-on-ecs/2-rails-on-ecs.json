@@ -484,7 +484,9 @@
         "ServiceScalingPolicy": {
             "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
             "Properties": {
-                "PolicyName": "AStepPolicy",
+                "PolicyName": {
+                    "Fn::Sub": "${AWS::StackName}-ServiceScalingPolicy"
+                },
                 "PolicyType": "StepScaling",
                 "ScalingTargetId": {
                     "Ref": "ServiceScalingTarget"
@@ -508,7 +510,7 @@
                 "EvaluationPeriods": 1,
                 "Statistic": "Average",
                 "Threshold": 10,
-                "AlarmDescription": "Alarm if our ALB generates too many HTTP 500s.",
+                "AlarmDescription": "Alarm if our ALB generates too many HTTP 500s",
                 "Period": 60,
                 "AlarmActions": [
                     {
@@ -527,8 +529,7 @@
                         }
                     }
                 ],
-                "ComparisonOperator": "GreaterThanThreshold",
-                "MetricName": "HTTPCode_ELB_5XX_Count"
+                "ComparisonOperator": "GreaterThanThreshold"
             }
         }
     },
