@@ -14,10 +14,5 @@ module RailsOnEcs
     config.log_levels   = :debug
     config.log_tags     = [:subdomain, :uuid]
     config.logger       = ActiveSupport::TaggedLogging.new(Logger.new(STDOUT))
-
-    config.cache_store  = :redis_store, ENV['CACHE_URL'],
-                          { namespace: 'rails::cache' }
-
-    config.active_job.queue_adapter = :sidekiq
   end
 end
