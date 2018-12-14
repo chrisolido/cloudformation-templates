@@ -494,7 +494,7 @@
             "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
             "Properties": {
                 "MaxCapacity": {
-                    "Ref": "MaxServiceNumber"
+                    "Ref": "MaxServicesNumber"
                 },
                 "MinCapacity": 1,
                 "ResourceId": {

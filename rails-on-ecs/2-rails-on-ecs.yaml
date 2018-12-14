@@ -295,7 +295,7 @@ Resources:
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: !Ref MaxServiceNumber
+      MaxCapacity: !Ref MaxServicesNumber
       MinCapacity: 1
       ResourceId: !Sub "service/${ECSCluster}/${RailsService.Name}"
       RoleARN: !ImportValue autoscaling-role-arn
