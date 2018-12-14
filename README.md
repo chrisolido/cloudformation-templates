@@ -24,7 +24,7 @@ Can be used in multiple AWS regions. Multiple servers synced using AWS EFS.
 
 ## Rails on ECS
 
-In progress
+For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`.
 
 ## Creating an EC2 Key Pair
 
