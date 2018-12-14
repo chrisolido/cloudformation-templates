@@ -17,5 +17,7 @@ module RailsOnEcs
 
     config.cache_store  = :redis_store, ENV['CACHE_URL'],
                           { namespace: 'rails::cache' }
+
+    config.active_job.queue_adapter = :sidekiq
   end
 end
