@@ -4,6 +4,7 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   host: postgres
   username: postgres
+  password: yourpassword
 
 development:
   <<: *default
@@ -14,4 +15,5 @@ test:
   database: rails-on-ecs_test
 
 production:
+  <<: *default
   url: <%= ENV['DATABASE_URL'] %>

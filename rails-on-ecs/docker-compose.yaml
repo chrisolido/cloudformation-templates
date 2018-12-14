@@ -3,6 +3,9 @@ version: '3'
 services:
   postgres:
     image: postgres:10.6-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=yourpassword
     volumes:
       - postgres:/var/lib/postgresql/data
 
@@ -11,8 +14,10 @@ services:
     depends_on:
       - postgres
     environment:
-    # - DATABASE_URL=postgresql://user:password@host:5432/database?encoding=utf8&pool=5&timeout=5000
       - RAILS_MAX_THREADS=1
+    #   use these to test out production env locally
+    # - RAILS_ENV=production
+    # - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432?encoding=utf8&pool=5&timeout=500
     entrypoint: /db-migrations.sh
     command: bundle exec rails server -p 3000 -b '0.0.0.0'
     volumes:

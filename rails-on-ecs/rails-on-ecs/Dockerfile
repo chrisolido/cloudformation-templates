@@ -4,7 +4,7 @@ RUN apk update && apk add libpq
 
 RUN apk add --no-cache --update \
         build-base linux-headers git tzdata \
-        postgresql-dev sqlite sqlite-dev nodejs \
+        postgresql-dev yarn nodejs \
     && rm -rf /var/cache/apk/*
 
 WORKDIR /usr/src/app
@@ -17,5 +17,7 @@ RUN bundle install --deployment
 COPY . .
 COPY db-migrations.sh /db-migrations.sh
 RUN chmod +x /db-migrations.sh
+
+RUN RAILS_ENV=production bundle exec rake assets:precompile
 
 EXPOSE 3000
