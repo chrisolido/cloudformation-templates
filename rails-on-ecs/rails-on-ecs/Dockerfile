@@ -15,7 +15,7 @@ RUN apk add --no-cache --update \
 RUN bundle install --deployment
 
 COPY . .
-COPY docker-entrypoint.sh /
+COPY db-migrations.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3000
