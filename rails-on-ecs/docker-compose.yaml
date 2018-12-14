@@ -11,7 +11,7 @@ services:
     build: rails-on-ecs
     depends_on:
       - postgres
-    entrypoint: /docker-entrypoint.sh
+    entrypoint: /db-migrations.sh
     command: bundle exec rails server -p 3000 -b '0.0.0.0'
     volumes:
       - static:/usr/src/app/public
