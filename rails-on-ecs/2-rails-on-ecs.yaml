@@ -13,8 +13,14 @@ Metadata:
           default: Application Configuration
         Parameters:
           - ApplicationSize
-          - DesiredCapacity
-          - MaxSize
+          - DesiredEC2Capacity
+          - MaxEC2Instances
+      -
+        Label:
+          default: ECS Configuration
+        Parameters:
+          - DesiredServicesNumber
+          - MaxServicesNumber
 Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
@@ -26,14 +32,22 @@ Parameters:
     MaxLength: "18"
     Default: 0.0.0.0/0
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-  DesiredCapacity:
+  DesiredEC2Capacity:
     Type: Number
     Default: 1
-    Description: Number of instances to launch in your ECS cluster.
-  MaxSize:
+    Description: Number of EC2 instances to launch in your ECS cluster.
+  MaxEC2Instances:
     Type: Number
     Default: 1
-    Description: Maximum number of instances that can be launched in your ECS cluster.
+    Description: Maximum number of EC2 instances that can be launched in your ECS cluster.
+  DesiredServicesNumber:
+    Type: Number
+    Default: 2
+    Description: Number of ECS services to launch in your ECS cluster.
+  MaxServicesNumber:
+    Type: Number
+    Default: 4
+    Description: Maximum number of ECS services that can be launched in your ECS cluster.
   ApplicationSize:
     Type: String
     Default: DEV
@@ -194,10 +208,11 @@ Resources:
         - !ImportValue shared-vpc-public-subnet2
       LaunchConfigurationName: !Ref ClusterLaunchConfiguration
       MinSize: 1
-      MaxSize: !Ref MaxSize
-      DesiredCapacity: !Ref DesiredCapacity
+      MaxSize: !Ref MaxEC2Instances
+      DesiredCapacity: !Ref DesiredEC2Capacity
     CreationPolicy:
       ResourceSignal:
+        Count: !Ref DesiredServicesNumber
         Timeout: PT15M
     UpdatePolicy:
       AutoScalingReplacingUpdate:
@@ -269,10 +284,10 @@ Resources:
     DependsOn: ALBListener
     Properties:
       Cluster: !Ref ECSCluster
-      DesiredCount: 1
+      DesiredCount: !Ref DesiredServicesNumber
       LoadBalancers:
         -
-          ContainerName: simple-app
+          ContainerName: rails-app
           ContainerPort: 80
           TargetGroupArn: !Ref ECSTargetGroup
       Role: !ImportValue ecs-service-role
@@ -280,7 +295,7 @@ Resources:
   ServiceScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: 2
+      MaxCapacity: !Ref MaxServiceNumber
       MinCapacity: 1
       ResourceId: !Sub "service/${ECSCluster}/${RailsService.Name}"
       RoleARN: !ImportValue autoscaling-role-arn
