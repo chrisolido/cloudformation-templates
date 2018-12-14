@@ -224,7 +224,7 @@ Resources:
       Family: !Sub "${AWS::StackName}-rails-on-ecs"
       ContainerDefinitions:
         -
-          Name: simple-app
+          Name: rails-app
           Cpu: 10
           Essential: true
           Image: httpd:2.4-alpine
@@ -234,10 +234,10 @@ Resources:
             Options:
               awslogs-group: !Ref CloudwatchLogsGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs-demo-app
+              awslogs-stream-prefix: rails-on-ecs
           MountPoints:
             - ContainerPath: /usr/local/apache2/htdocs
-              SourceVolume: my-vol
+              SourceVolume: static-files
           PortMappings:
             - ContainerPort: 80
         -
@@ -259,11 +259,11 @@ Resources:
             Options:
               awslogs-group: !Ref CloudwatchLogsGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: ecs-demo-app
+              awslogs-stream-prefix: rails-on-ecs
           VolumesFrom:
-            - SourceContainer: simple-app
+            - SourceContainer: rails-app
       Volumes:
-        - Name: my-vol
+        - Name: static-files
   RailsService:
     Type: AWS::ECS::Service
     DependsOn: ALBListener
