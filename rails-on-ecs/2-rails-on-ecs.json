@@ -226,7 +226,7 @@
                 "RetentionInDays": 14
             }
         },
-        "ECSApplicationLoadBalancer": {
+        "ApplicationLoadBalancer": {
             "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
             "Properties": {
                 "Scheme": "internet-facing",
@@ -263,13 +263,13 @@
                     }
                 ],
                 "LoadBalancerArn": {
-                    "Ref": "ECSApplicationLoadBalancer"
+                    "Ref": "ApplicationLoadBalancer"
                 },
                 "Port": 80,
                 "Protocol": "HTTP"
             }
         },
-        "ECSALBListenerRule": {
+        "ALBListenerRule": {
             "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
             "DependsOn": "ALBListener",
             "Properties": {
@@ -297,7 +297,7 @@
         },
         "ECSTargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
-            "DependsOn": "ECSApplicationLoadBalancer",
+            "DependsOn": "ApplicationLoadBalancer",
             "Properties": {
                 "HealthCheckIntervalSeconds": 10,
                 "HealthCheckPath": "/",
@@ -312,7 +312,7 @@
                 }
             }
         },
-        "ECSAutoScalingGroup": {
+        "EC2AutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
                 "VPCZoneIdentifier": [
@@ -382,7 +382,7 @@
                 },
                 "UserData": {
                     "Fn::Base64": {
-                        "Fn::Sub": "#!/bin/bash\nyum update -y\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}\n"
+                        "Fn::Sub": "#!/bin/bash\nyum update -y\necho ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2AutoScalingGroup --region ${AWS::Region}\n"
                     }
                 }
             }
@@ -552,7 +552,7 @@
                         "Name": "LoadBalancer",
                         "Value": {
                             "Fn::GetAtt": [
-                                "ECSApplicationLoadBalancer",
+                                "ApplicationLoadBalancer",
                                 "LoadBalancerFullName"
                             ]
                         }
@@ -566,7 +566,7 @@
         "ApplicationURL": {
             "Description": "Your Application URL",
             "Value": {
-                "Fn::Sub": "http://${ECSApplicationLoadBalancer.DNSName}"
+                "Fn::Sub": "http://${ApplicationLoadBalancer.DNSName}"
             }
         }
     }
