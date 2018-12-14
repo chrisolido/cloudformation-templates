@@ -32,7 +32,7 @@ First deploy the `1-shared-vpc-iam` template on Cloudformation, then deploy as m
 
 For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`.
 
-It's advisable for any users to create their own `master.key` file in the `config` folder, as the repository does not contain one. You can then run `docker-compose build` to build your own Docker image and tag it for upload to a repository.
+It's advisable for any users to create their own `master.key` and `credentials.yml.enc` file in the `config` folder, as the repository does not contain a valid pair. You can then run `docker-compose build` to build your own Docker image and tag it for upload to a repository.
 
 ## Creating an EC2 Key Pair
 
