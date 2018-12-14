@@ -24,6 +24,12 @@ Can be used in multiple AWS regions. Multiple servers synced using AWS EFS.
 
 ## Rails on ECS
 
+### NOTE: THIS IS STILL IN PROGRESS
+
+This project uses Amazon RDS for Postgres, AWS ElastiCache for Redis, and AWS EC2 for running the ECS Cluster.
+
+First deploy the `1-shared-vpc-iam` template on Cloudformation, then deploy as many `2-rails-on-ecs` applications as desired. Each application will have its own RDS and ElastiCache instance.
+
 For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`.
 
 ## Creating an EC2 Key Pair
