@@ -38,7 +38,7 @@ Parameters:
     Description: Number of EC2 instances to launch in your ECS cluster.
   MaxEC2Instances:
     Type: Number
-    Default: 1
+    Default: 2
     Description: Maximum number of EC2 instances that can be launched in your ECS cluster.
   DesiredServicesNumber:
     Type: Number
@@ -243,7 +243,7 @@ Resources:
           Cpu: 10
           Essential: true
           Image: httpd:2.4-alpine
-          Memory: 300
+          Memory: 200
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -268,7 +268,7 @@ Resources:
           EntryPoint: [sh, -c]
           Essential: false
           Image: busybox
-          Memory: 200
+          Memory: 100
           LogConfiguration:
             LogDriver: awslogs
             Options:
