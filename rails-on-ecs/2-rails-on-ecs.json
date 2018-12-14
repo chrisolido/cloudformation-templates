@@ -189,20 +189,6 @@
                 }
             }
         },
-        "ECSSecurityGroupRedisIngress": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Properties": {
-                "GroupId": {
-                    "Ref": "ECSSecurityGroup"
-                },
-                "IpProtocol": "tcp",
-                "FromPort": 6379,
-                "ToPort": 6379,
-                "SourceSecurityGroupId": {
-                    "Ref": "ECSSecurityGroup"
-                }
-            }
-        },
         "ECSSecurityGroupALBIngress": {
             "Type": "AWS::EC2::SecurityGroupIngress",
             "Properties": {
