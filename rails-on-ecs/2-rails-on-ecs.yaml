@@ -212,7 +212,7 @@ Resources:
       DesiredCapacity: !Ref DesiredEC2Capacity
     CreationPolicy:
       ResourceSignal:
-        Count: !Ref DesiredServicesNumber
+        Count: !Ref DesiredEC2Capacity
         Timeout: PT15M
     UpdatePolicy:
       AutoScalingReplacingUpdate:

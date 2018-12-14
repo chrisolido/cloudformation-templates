@@ -337,7 +337,7 @@
             "CreationPolicy": {
                 "ResourceSignal": {
                     "Count": {
-                        "Ref": "DesiredServicesNumber"
+                        "Ref": "DesiredEC2Capacity"
                     },
                     "Timeout": "PT15M"
                 }
