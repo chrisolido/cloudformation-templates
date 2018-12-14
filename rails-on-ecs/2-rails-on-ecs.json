@@ -543,7 +543,10 @@
                         "Ref": "ServiceScalingPolicy"
                     }
                 ],
-                "Namespace": "AWS/ApplicationELB",
+                "MetricName": {
+                    "Fn::Sub": "${AWS::StackName}-ALBStatus500"
+                },
+                "Namespace": "AWS/ApplicationLB",
                 "Dimensions": [
                     {
                         "Name": "LoadBalancer",
