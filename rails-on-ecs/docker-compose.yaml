@@ -15,7 +15,7 @@ services:
     depends_on:
       - postgres
     environment:
-    # - DATABASE_URL=postgresql://user:password@host:5432/databse?encoding=utf8&pool=5&timeout=5000
+    # - DATABASE_URL=postgresql://user:password@host:5432/database?encoding=utf8&pool=5&timeout=5000
       - CACHE_URL=redis://redis:6379
       - JOB_WORKER_URL=redis://redis:6379
       - WEB_CONCURRENCY=1
