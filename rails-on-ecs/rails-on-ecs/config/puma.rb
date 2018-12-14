@@ -3,9 +3,9 @@
 # Any libraries that use thread pools should be configured to match
 # the maximum value specified for Puma. Default is set to 5 threads for minimum
 # and maximum; this matches the default thread size of Active Record.
-#
-threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
-threads threads_count, threads_count
+min_threads = ENV.fetch("RAILS_MIN_THREADS") { 1 }
+max_threads = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+threads min_threads, max_threads
 
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 #
@@ -32,3 +32,9 @@ preload_app!
 
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
+
+on_worker_boot do
+  # Connect to database on worker boot
+  defined?(ActiveRecord::Base) and
+    ActiveRecord::Base.establish_connection
+end
