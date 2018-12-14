@@ -9,12 +9,12 @@ services:
 
   web:
     build: rails-on-ecs
-    entrypoint: /docker-entrypoint.sh
-    command: bundle exec rails server -p 3000 -b '0.0.0.0'
     depends_on:
       - postgres
+    entrypoint: /docker-entrypoint.sh
+    command: bundle exec rails server -p 3000 -b '0.0.0.0'
     volumes:
-      - .:/usr/src/app
+      - static:/usr/src/app/public
 
   nginx:
     build: rails-nginx
@@ -25,3 +25,4 @@ services:
 
 volumes:
   postgres:
+  static:
