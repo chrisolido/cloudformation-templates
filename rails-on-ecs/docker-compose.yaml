@@ -15,7 +15,7 @@ services:
       - postgres
     environment:
       - RAILS_MAX_THREADS=1
-      # use these below to test out production env locally
+      # uncomment these below to test out production env locally
       # - RAILS_ENV=production
       # - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432?encoding=utf8&pool=5&timeout=500
     entrypoint: /usr/src/app/docker-entrypoint.sh
