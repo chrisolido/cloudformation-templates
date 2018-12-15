@@ -149,7 +149,7 @@ Outputs:
   VPCCidr:
     Description: IP Range of Shared Infrastructure VPC
     Value: !Ref VPCCidr
-    Export: # added to export
+    Export:
       Name: shared-vpc-cidr
   PrivateSubnet1:
     Description: ID of Shared Private Subnet 1
