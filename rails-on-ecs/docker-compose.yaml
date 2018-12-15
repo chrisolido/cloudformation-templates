@@ -29,6 +29,10 @@ services:
       - web
     ports:
       - 3000:80
+    environment:
+      - BACKEND_NAME=web
+      - BACKEND_PORT=3000
+      - HOST_URL=web
     volumes:
       - static:/usr/share/nginx/html
 
