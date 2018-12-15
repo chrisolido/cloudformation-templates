@@ -501,7 +501,7 @@
                             {
                                 "Name": "DATABASE_URL",
                                 "Value": {
-                                    "Fn::Sub": "postgresql://${DatabaseUser}:${DatabasePassword}@${PostgresRDSInstance.Endpoint.Address}:5432/${DatabaseName}?encoding=utf8&pool=5&timeout=500"
+                                    "Fn::Sub": "postgresql://${DatabaseUser}:${DatabasePassword}@${PostgresRDSInstance.Endpoint.Address}:5432/${DatabaseName}?encoding=utf8&pool=20&timeout=5000"
                                 }
                             }
                         ],
