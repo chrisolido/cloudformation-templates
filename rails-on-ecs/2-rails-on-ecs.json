@@ -28,7 +28,9 @@
                     },
                     "Parameters": [
                         "DesiredServicesNumber",
-                        "MaxServicesNumber"
+                        "MaxServicesNumber",
+                        "RailsAppContainerImage",
+                        "NginxContainerImage"
                     ]
                 },
                 {
@@ -78,6 +80,14 @@
             "Type": "Number",
             "Default": 4,
             "Description": "Maximum number of ECS services that can be launched in your ECS cluster."
+        },
+        "RailsAppContainerImage": {
+            "Type": "String",
+            "Default": "tyh835/rails-web"
+        },
+        "NginxContainerImage": {
+            "Type": "String",
+            "Default": "tyh835/rails-nginx"
         },
         "ApplicationSize": {
             "Type": "String",
@@ -467,7 +477,9 @@
                         "Cpu": 10,
                         "Memory": 256,
                         "Essential": true,
-                        "Image": "tyh835/rails-web",
+                        "Image": {
+                            "Ref": "RailsAppContainerImage"
+                        },
                         "WorkingDirectory": "/usr/src/app",
                         "EntryPoint": [
                             "/usr/src/app/db-migrations.sh"
@@ -517,7 +529,9 @@
                         "Cpu": 10,
                         "Memory": 128,
                         "Essential": true,
-                        "Image": "tyh835/rails-nginx",
+                        "Image": {
+                            "Ref": "NginxContainerImage"
+                        },
                         "Links": [
                             "web"
                         ],
