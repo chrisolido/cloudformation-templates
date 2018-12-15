@@ -301,7 +301,21 @@
                 "UnhealthyThresholdCount": 2,
                 "VpcId": {
                     "Fn::ImportValue": "shared-vpc-id"
-                }
+                },
+                "TargetGroupAttributes": [
+                    {
+                        "Key": "stickiness.enabled",
+                        "Value": "true"
+                    },
+                    {
+                        "Key": "stickiness.type",
+                        "Value": "lb_cookie"
+                    },
+                    {
+                        "Key": "stickiness.lb_cookie.duration_seconds",
+                        "Value": "30"
+                    }
+                ]
             }
         },
         "EC2AutoScalingGroup": {
