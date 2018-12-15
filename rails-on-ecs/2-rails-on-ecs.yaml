@@ -381,7 +381,7 @@ Resources:
     Properties:
       EvaluationPeriods: 1
       Statistic: Average
-      Threshold: 10
+      Threshold: 3
       AlarmDescription: Alarm if our ALB generates too many HTTP 500s
       Period: 60
       AlarmActions:
