@@ -66,7 +66,7 @@
         },
         "MaxEC2Instances": {
             "Type": "Number",
-            "Default": 2,
+            "Default": 4,
             "Description": "Maximum number of EC2 instances that can be launched in your ECS cluster."
         },
         "DesiredServicesNumber": {
@@ -340,6 +340,29 @@
                 }
             }
         },
+        "EC2AutoScalingPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "EC2AutoScalingGroup"
+                },
+                "PolicyType": "StepScaling",
+                "MetricAggregationType": "Average",
+                "EstimatedInstanceWarmup": 60,
+                "StepAdjustments": [
+                    {
+                        "MetricIntervalLowerBound": 0,
+                        "MetricIntervalUpperBound": 50,
+                        "ScalingAdjustment": 1
+                    },
+                    {
+                        "MetricIntervalLowerBound": 50,
+                        "ScalingAdjustment": 2
+                    }
+                ]
+            }
+        },
         "ECSSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
@@ -478,7 +501,7 @@
                     {
                         "Name": "nginx",
                         "Cpu": 10,
-                        "Memory": 256,
+                        "Memory": 128,
                         "Essential": true,
                         "Image": "tyh835/rails-nginx",
                         "Links": [
