@@ -30,7 +30,7 @@ This project uses Amazon RDS for Postgres and AWS EC2 for running the ECS Cluste
 
 First deploy the `1-shared-vpc-iam` template on Cloudformation, then deploy as many `2-rails-on-ecs` applications as desired. Each application will have its own RDS and ElastiCache instance.
 
-For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`.
+For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`. Rails should be up at `localhost`.
 
 It's advisable for any users to create their own `master.key` and `credentials.yml.enc` file in the `config` folder, as the repository does not contain a valid pair. You can then run `docker-compose build` to build your own Docker image and tag it for upload to a repository.
 
