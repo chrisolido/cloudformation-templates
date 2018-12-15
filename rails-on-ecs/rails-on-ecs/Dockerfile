@@ -15,8 +15,8 @@ COPY Gemfile.lock .
 RUN bundle install --deployment
 
 COPY . .
-COPY db-migrations.sh /db-migrations.sh
-RUN chmod +x /db-migrations.sh
+RUN chmod +x /usr/src/app/docker-entrypoint.sh
+RUN chmod +x /usr/src/app/db-migrations.sh
 
 RUN RAILS_ENV=production bundle exec rake assets:precompile
 

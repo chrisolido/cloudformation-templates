@@ -30,6 +30,18 @@
                         "DesiredServicesNumber",
                         "MaxServicesNumber"
                     ]
+                },
+                {
+                    "Label": {
+                        "default": "Database Configuration"
+                    },
+                    "Parameters": [
+                        "DatabaseName",
+                        "DatabaseUser",
+                        "DatabasePassword",
+                        "DatabaseCapacity",
+                        "SnapshotToRestore"
+                    ]
                 }
             ]
         }
@@ -77,6 +89,53 @@
                 "LARGE"
             ],
             "Description": "Select Application Size (S,M,L)"
+        },
+        "DatabaseName": {
+            "Type": "String",
+            "Default": "postgres",
+            "MinLength": 1,
+            "MaxLength": 64,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabaseUser": {
+            "Type": "String",
+            "Default": "yourusername",
+            "MinLength": 1,
+            "MaxLength": 16,
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*"
+        },
+        "DatabasePassword": {
+            "Type": "String",
+            "Default": "yourpassword",
+            "MinLength": 8,
+            "MaxLength": 41,
+            "AllowedPattern": "[a-zA-Z0-9~!#$%^&]*",
+            "NoEcho": true
+        },
+        "DatabaseCapacity": {
+            "Type": "String",
+            "Default": "5",
+            "AllowedPattern": "[0-9]+",
+            "Description": "Database Storage Capacity in GB"
+        },
+        "SnapshotToRestore": {
+            "Description": "Restore from existing RDS snapshot (not required)",
+            "Type": "String",
+            "Default": ""
+        }
+    },
+    "Conditions": {
+        "isRestore": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        ""
+                    ]
+                }
+            ]
         }
     },
     "Mappings": {
@@ -149,59 +208,6 @@
     "Resources": {
         "ECSCluster": {
             "Type": "AWS::ECS::Cluster"
-        },
-        "ECSSecurityGroup": {
-            "Type": "AWS::EC2::SecurityGroup",
-            "Properties": {
-                "GroupDescription": "ECS Security Group",
-                "VpcId": {
-                    "Fn::ImportValue": "shared-vpc-id"
-                },
-                "SecurityGroupIngress": [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 22,
-                        "ToPort": 22,
-                        "CidrIp": {
-                            "Ref": "SSHLocation"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 80,
-                        "ToPort": 80,
-                        "CidrIp": "0.0.0.0/0"
-                    }
-                ]
-            }
-        },
-        "ECSSecurityGroupPostgresIngress": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Properties": {
-                "GroupId": {
-                    "Ref": "ECSSecurityGroup"
-                },
-                "IpProtocol": "tcp",
-                "FromPort": 5432,
-                "ToPort": 5432,
-                "SourceSecurityGroupId": {
-                    "Ref": "ECSSecurityGroup"
-                }
-            }
-        },
-        "ECSSecurityGroupALBIngress": {
-            "Type": "AWS::EC2::SecurityGroupIngress",
-            "Properties": {
-                "GroupId": {
-                    "Ref": "ECSSecurityGroup"
-                },
-                "IpProtocol": "tcp",
-                "FromPort": 32768,
-                "ToPort": 61000,
-                "SourceSecurityGroupId": {
-                    "Ref": "ECSSecurityGroup"
-                }
-            }
         },
         "CloudwatchLogsGroup": {
             "Type": "AWS::Logs::LogGroup",
@@ -334,6 +340,45 @@
                 }
             }
         },
+        "ECSSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "ECS Security Group",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22,
+                        "CidrIp": {
+                            "Ref": "SSHLocation"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ]
+            }
+        },
+        "ECSSecurityGroupALBIngress": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "GroupId": {
+                    "Ref": "ECSSecurityGroup"
+                },
+                "IpProtocol": "tcp",
+                "FromPort": 32768,
+                "ToPort": 61000,
+                "SourceSecurityGroupId": {
+                    "Ref": "ECSSecurityGroup"
+                }
+            }
+        },
         "ClusterLaunchConfiguration": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
             "Properties": {
@@ -381,11 +426,36 @@
                 },
                 "ContainerDefinitions": [
                     {
-                        "Name": "rails-app",
+                        "Name": "web",
                         "Cpu": 10,
+                        "Memory": 256,
                         "Essential": true,
-                        "Image": "httpd:2.4-alpine",
-                        "Memory": 200,
+                        "Image": "tyh835/rails-web",
+                        "WorkingDirectory": "/usr/src/app",
+                        "EntryPoint": [
+                            "/usr/src/app/db-migrations.sh"
+                        ],
+                        "Command": [
+                            "bundle",
+                            "exec",
+                            "rails server -p 3000 -b '0.0.0.0'"
+                        ],
+                        "Environment": [
+                            {
+                                "Name": "RAILS_MAX_THREADS",
+                                "Value": 5
+                            },
+                            {
+                                "Name": "RAILS_ENV",
+                                "Value": "production"
+                            },
+                            {
+                                "Name": "DATABASE_URL",
+                                "Value": {
+                                    "Fn::Sub": "postgresql://${DatabaseUser}:${DatabasePassword}@${PostgresRDSInstance.Endpoint.Address}:5432/${DatabaseName}?encoding=utf8&pool=5&timeout=500"
+                                }
+                            }
+                        ],
                         "LogConfiguration": {
                             "LogDriver": "awslogs",
                             "Options": {
@@ -400,29 +470,39 @@
                         },
                         "MountPoints": [
                             {
-                                "ContainerPath": "/usr/local/apache2/htdocs",
+                                "ContainerPath": "/usr/src/app/public",
                                 "SourceVolume": "static-files"
-                            }
-                        ],
-                        "PortMappings": [
-                            {
-                                "ContainerPort": 80
                             }
                         ]
                     },
                     {
-                        "Name": "busybox",
+                        "Name": "nginx",
                         "Cpu": 10,
-                        "Command": [
-                            "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333; font-family: Helvetica, Helvetica Neue, Arial;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+                        "Memory": 256,
+                        "Essential": true,
+                        "Image": "tyh835/rails-nginx",
+                        "Links": [
+                            "web"
                         ],
-                        "EntryPoint": [
-                            "sh",
-                            "-c"
+                        "Environment": [
+                            {
+                                "Name": "BACKEND_NAME",
+                                "Value": "web"
+                            },
+                            {
+                                "Name": "BACKEND_PORT",
+                                "Value": "3000"
+                            },
+                            {
+                                "Name": "HOST_URL",
+                                "Value": {
+                                    "Fn::GetAtt": [
+                                        "ApplicationLoadBalancer",
+                                        "DNSName"
+                                    ]
+                                }
+                            }
                         ],
-                        "Essential": false,
-                        "Image": "busybox",
-                        "Memory": 100,
                         "LogConfiguration": {
                             "LogDriver": "awslogs",
                             "Options": {
@@ -435,9 +515,16 @@
                                 "awslogs-stream-prefix": "rails-on-ecs"
                             }
                         },
-                        "VolumesFrom": [
+                        "MountPoints": [
                             {
-                                "SourceContainer": "rails-app"
+                                "ContainerPath": "/usr/share/nginx/html",
+                                "SourceVolume": "static-files",
+                                "ReadOnly": true
+                            }
+                        ],
+                        "PortMappings": [
+                            {
+                                "ContainerPort": 80
                             }
                         ]
                     }
@@ -461,7 +548,7 @@
                 },
                 "LoadBalancers": [
                     {
-                        "ContainerName": "rails-app",
+                        "ContainerName": "nginx",
                         "ContainerPort": 80,
                         "TargetGroupArn": {
                             "Ref": "ECSTargetGroup"
@@ -545,6 +632,113 @@
                     }
                 ],
                 "ComparisonOperator": "GreaterThanThreshold"
+            }
+        },
+        "PostgresRDSInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "DeletionPolicy": "Snapshot",
+            "Properties": {
+                "AllocatedStorage": {
+                    "Ref": "DatabaseCapacity"
+                },
+                "StorageType": "gp2",
+                "BackupRetentionPeriod": "7",
+                "DBName": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseName"
+                        }
+                    ]
+                },
+                "Engine": "postgres",
+                "EngineVersion": "10.6",
+                "DBSubnetGroupName": {
+                    "Ref": "DBSubnetGroup"
+                },
+                "MasterUsername": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabaseUser"
+                        }
+                    ]
+                },
+                "MasterUserPassword": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DatabasePassword"
+                        }
+                    ]
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "isRestore",
+                        {
+                            "Ref": "SnapshotToRestore"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "DBInstanceClass": {
+                    "Fn::FindInMap": [
+                        "InstanceSize",
+                        {
+                            "Ref": "ApplicationSize"
+                        },
+                        "DB"
+                    ]
+                },
+                "VPCSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ]
+            }
+        },
+        "DBSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "RDS Subnet Group",
+                "SubnetIds": [
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-subnet1"
+                    },
+                    {
+                        "Fn::ImportValue": "shared-vpc-private-subnet2"
+                    }
+                ]
+            }
+        },
+        "DBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "RDS Security Group",
+                "VpcId": {
+                    "Fn::ImportValue": "shared-vpc-id"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 5432,
+                        "ToPort": 5432,
+                        "SourceSecurityGroupId": {
+                            "Ref": "ECSSecurityGroup"
+                        }
+                    }
+                ]
             }
         }
     },

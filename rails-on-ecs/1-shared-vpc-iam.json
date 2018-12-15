@@ -402,6 +402,15 @@
                 "Name": "shared-vpc-id"
             }
         },
+        "VPCCidr": {
+            "Description": "IP Range of Shared Infrastructure VPC",
+            "Value": {
+                "Ref": "VPCCidr"
+            },
+            "Export": {
+                "Name": "shared-vpc-cidr"
+            }
+        },
         "PublicSubnet1": {
             "Description": "ID of Shared Public Subnet 1",
             "Value": {
