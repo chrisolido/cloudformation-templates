@@ -14,7 +14,7 @@ services:
     depends_on:
       - postgres
     environment:
-      - RAILS_MAX_THREADS=1
+      - RAILS_MAX_THREADS=5
       # NOTE: this key is for demo purposes. You should generate your own `master.key`
       - RAILS_MASTER_KEY=908df32fa781768497774479f839c789
       # uncomment these below to test out production env locally

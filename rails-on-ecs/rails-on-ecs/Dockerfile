@@ -21,4 +21,4 @@ EXPOSE 3000
 
 ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
 
-CMD bundle exec rails server -p 3000 -b '0.0.0.0'
+CMD bundle exec puma -C config/puma.rb -b tcp://0.0.0.0:3000
