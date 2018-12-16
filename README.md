@@ -28,11 +28,11 @@ This project uses Amazon RDS for Postgres and AWS EC2 for running Ruby on Rails 
 
 First deploy the `1-shared-vpc-iam` template on Cloudformation, then deploy as many `2-rails-on-ecs` applications as desired. Each application will have its own RDS and ElastiCache instance.
 
-For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`. Rails should be up at `localhost`.
+For local development, make sure `docker` and `docker-compose` are installed. Then, simply run `docker-compose up` within the directory. Rails should be up at `localhost`.
 
-It's advisable for any users to create their own `master.key` and `credentials.yml.enc` for Rails, as the repository does not contain a valid pair. You can then copy the key to the `RAILS_MASTER_KEY` variable in the `docker-compose.yaml` file, and run `docker-compose build` to build your own Docker image for uploading to a repository.
+Developers should create their own `master.key` and `credentials.yml.enc` for their Rails app, as the repository secret key is only for demonstration purposes. You can set `RAILS_MASTER_KEY` environment variable (value from `master.key`) in `docker-compose.yaml` file to develop locally, and run `docker-compose build` to build your application Docker image for pushing to a repository.
 
-Make sure to not commit your `master.key` file or upload a `docker-compose.yaml` file containing the key. Instead, enter it as to the parameter defined in CloudFormation.
+Make sure to not commit your `master.key` file or upload a `docker-compose.yaml` file containing the key. Instead, enter it to the `RailsMasterKey` parameter to CloudFormation at deploy time.
 
 ## Creating an EC2 Key Pair
 
