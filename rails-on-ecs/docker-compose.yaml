@@ -15,7 +15,8 @@ services:
       - postgres
     environment:
       - RAILS_MAX_THREADS=1
-      - RAILS_MASTER_KEY=YOUR_SECRET_KEY_HERE
+      # NOTE: this key is for demo purposes. You should generate your own `master.key`
+      - RAILS_MASTER_KEY=908df32fa781768497774479f839c789
       # uncomment these below to test out production env locally
       # - RAILS_ENV=production
       # - DATABASE_URL=postgresql://postgres:yourpassword@postgres:5432?encoding=utf8&pool=5&timeout=500
