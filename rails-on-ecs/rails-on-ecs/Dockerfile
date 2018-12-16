@@ -16,8 +16,9 @@ RUN bundle install --deployment
 
 COPY . .
 RUN chmod +x /usr/src/app/docker-entrypoint.sh
-RUN chmod +x /usr/src/app/db-migrations.sh
-
-RUN RAILS_ENV=production bundle exec rake assets:precompile
 
 EXPOSE 3000
+
+ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
+
+CMD bundle exec rails server -p 3000 -b '0.0.0.0'

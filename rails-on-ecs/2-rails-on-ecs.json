@@ -19,7 +19,8 @@
                     "Parameters": [
                         "ApplicationSize",
                         "DesiredEC2Capacity",
-                        "MaxEC2Instances"
+                        "MaxEC2Instances",
+                        "RailsMasterKey"
                     ]
                 },
                 {
@@ -70,6 +71,11 @@
             "Type": "Number",
             "Default": 4,
             "Description": "Maximum number of EC2 instances that can be launched in your ECS cluster."
+        },
+        "RailsMasterKey": {
+            "Type": "String",
+            "Description": "Enter the Rails master key found in 'config/master.key'",
+            "NoEcho": true
         },
         "DesiredServicesNumber": {
             "Type": "Number",
@@ -480,15 +486,6 @@
                         "Image": {
                             "Ref": "RailsAppContainerImage"
                         },
-                        "WorkingDirectory": "/usr/src/app",
-                        "EntryPoint": [
-                            "/usr/src/app/db-migrations.sh"
-                        ],
-                        "Command": [
-                            "bundle",
-                            "exec",
-                            "rails server -p 3000 -b '0.0.0.0'"
-                        ],
                         "Environment": [
                             {
                                 "Name": "RAILS_MAX_THREADS",
@@ -497,6 +494,12 @@
                             {
                                 "Name": "RAILS_ENV",
                                 "Value": "production"
+                            },
+                            {
+                                "Name": "RAILS_MASTER_KEY",
+                                "Value": {
+                                    "Ref": "RailsMasterKey"
+                                }
                             },
                             {
                                 "Name": "DATABASE_URL",

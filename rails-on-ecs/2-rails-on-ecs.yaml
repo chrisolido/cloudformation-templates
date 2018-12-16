@@ -15,6 +15,7 @@ Metadata:
           - ApplicationSize
           - DesiredEC2Capacity
           - MaxEC2Instances
+          - RailsMasterKey
       -
         Label:
           default: ECS Configuration
@@ -51,6 +52,10 @@ Parameters:
     Type: Number
     Default: 4
     Description: Maximum number of EC2 instances that can be launched in your ECS cluster.
+  RailsMasterKey:
+    Type: String
+    Description: Enter the Rails master key found in 'config/master.key'
+    NoEcho: true
   DesiredServicesNumber:
     Type: Number
     Default: 2
@@ -297,18 +302,13 @@ Resources:
           Memory: 256
           Essential: true
           Image: !Ref RailsAppContainerImage
-          WorkingDirectory: /usr/src/app
-          EntryPoint:
-            - /usr/src/app/db-migrations.sh
-          Command:
-            - bundle
-            - exec
-            - rails server -p 3000 -b '0.0.0.0'
           Environment:
             - Name: RAILS_MAX_THREADS
               Value: 5
             - Name: RAILS_ENV
               Value: production
+            - Name: RAILS_MASTER_KEY
+              Value: !Ref RailsMasterKey
             - Name: DATABASE_URL
               Value: !Sub "postgresql://${DatabaseUser}:${DatabasePassword}@${PostgresRDSInstance.Endpoint.Address}:5432/${DatabaseName}?encoding=utf8&pool=20&timeout=5000"
           LogConfiguration:

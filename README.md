@@ -30,7 +30,9 @@ First deploy the `1-shared-vpc-iam` template on Cloudformation, then deploy as m
 
 For local development, make sure `docker` and `docker-compose` are installed. Then, simply go into the folder and run `docker-compose up`. Rails should be up at `localhost`.
 
-It's advisable for any users to create their own `master.key` and `credentials.yml.enc` file in the `config` folder, as the repository does not contain a valid pair. You can then run `docker-compose build` to build your own Docker image and tag it for upload to a repository.
+It's advisable for any users to create their own `master.key` and `credentials.yml.enc` for Rails, as the repository does not contain a valid pair. You can then copy the key to the `RAILS_MASTER_KEY` variable in the `docker-compose.yaml` file, and run `docker-compose build` to build your own Docker image for uploading to a repository.
+
+Make sure to not commit your `master.key` file or upload a `docker-compose.yaml` file containing the key. Instead, enter it as to the parameter defined in CloudFormation.
 
 ## Creating an EC2 Key Pair
 
