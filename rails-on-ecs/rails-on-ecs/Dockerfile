@@ -1,18 +1,15 @@
 FROM ruby:2.5-alpine
 
-RUN apk update && apk add libpq
-
-RUN apk add --no-cache --update \
-        build-base linux-headers git tzdata \
-        postgresql-dev yarn nodejs \
-    && rm -rf /var/cache/apk/*
-
+RUN apk update && apk add libpq tzdata yarn nodejs 
 WORKDIR /usr/src/app
 
 COPY Gemfile .
 COPY Gemfile.lock .
 
-RUN bundle install --deployment
+RUN apk add --no-cache --virtual .build-deps \
+        build-base linux-headers git postgresql-dev \
+    && bundle install --deployment \
+    && apk del .build-deps
 
 COPY . .
 RUN chmod +x /usr/src/app/docker-entrypoint.sh
