@@ -10,7 +10,7 @@ services:
       - postgres:/var/lib/postgresql/data
 
   web:
-    build: rails-on-ecs
+    build: rails-app
     depends_on:
       - postgres
     environment:
@@ -24,7 +24,7 @@ services:
       - static:/usr/src/app/public
 
   nginx:
-    build: rails-nginx
+    build: nginx
     depends_on:
       - web
     ports:
